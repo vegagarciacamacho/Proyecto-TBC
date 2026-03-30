@@ -236,6 +236,50 @@
 				"type": "function"
 			},
 			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_id",
+						"type": "uint256"
+					}
+				],
+				"name": "getProposalInfo",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "title",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "description",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "budget",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "executable",
+						"type": "address"
+					},
+					{
+						"internalType": "enum QuadraticVoting.ProposalStatus",
+						"name": "status",
+						"type": "uint8"
+					},
+					{
+						"internalType": "uint256",
+						"name": "votes",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
 				"inputs": [],
 				"name": "getSignalingProposals",
 				"outputs": [
@@ -587,11 +631,11 @@
 			]
 		},
 		"src/QuadraticVoting.sol": {
-			"keccak256": "0x9f40a43557709dc2c7bbf45ee762de9329a3a0167b7d354828b177a42ebd586e",
+			"keccak256": "0x3eb19c674a66fb36dc4cb9745b6cd8116e686c995b843d05942bd8b3b286a9d5",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://db45b8565e37179191cc273149ce42b50e5f4cbf2503355bc3603aec02e9ab01",
-				"dweb:/ipfs/QmYzJJHdkSdqNAsMndL7SGQKzJ3eC96cA8fqSoQsVLGzJw"
+				"bzz-raw://7c5e94edf905cd2a0aa879300a595acd33bb721876ae09adb2863a927be5854d",
+				"dweb:/ipfs/QmeZq7Q6U557L4eLDcPGsLzFJMe4r4bQgQ7aZizfMFTqvY"
 			]
 		}
 	},
