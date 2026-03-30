@@ -144,11 +144,11 @@
 			]
 		},
 		"src/QuadraticVoting.sol": {
-			"keccak256": "0x615aee3f3f4a4e5c2b34c47f305bebf747e00c05fd1508cfe0898ad7701453fc",
+			"keccak256": "0xf34ddf1f0e9863625932acfdbaea06c53ce87358e586e2b055c5464f96a5bf0b",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://8ab1fa393f863b5aad43de84b29d127b28d9f3e81069b51f3ab8045acbc88bc7",
-				"dweb:/ipfs/QmaM3rrPrdgCcqirVfNfHQTJPvzZSixRkguHnfE1TvVGgS"
+				"bzz-raw://04b77ad20cd047552b20e8a3831813af2d950620953bdbc654a9e74ac4c91add",
+				"dweb:/ipfs/QmbxYBtGQLsUgU5kAK4D6JmiapZZztxfm6ygsUBXnZxXak"
 			]
 		},
 		"tests/QuadraticVoting_test.sol": {
