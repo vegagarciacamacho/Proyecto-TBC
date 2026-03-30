@@ -143,6 +143,11 @@
 						"type": "string"
 					},
 					{
+						"internalType": "string",
+						"name": "_desc",
+						"type": "string"
+					},
+					{
 						"internalType": "uint256",
 						"name": "_budget",
 						"type": "uint256"
@@ -172,10 +177,36 @@
 				"type": "function"
 			},
 			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_id",
+						"type": "uint256"
+					}
+				],
+				"name": "cancelProposal",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
 				"inputs": [],
 				"name": "closeVoting",
 				"outputs": [],
 				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "getApprovedProposals",
+				"outputs": [
+					{
+						"internalType": "uint256[]",
+						"name": "",
+						"type": "uint256[]"
+					}
+				],
+				"stateMutability": "view",
 				"type": "function"
 			},
 			{
@@ -186,6 +217,32 @@
 						"internalType": "address",
 						"name": "",
 						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "getPendingProposals",
+				"outputs": [
+					{
+						"internalType": "uint256[]",
+						"name": "",
+						"type": "uint256[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "getSignalingProposals",
+				"outputs": [
+					{
+						"internalType": "uint256[]",
+						"name": "",
+						"type": "uint256[]"
 					}
 				],
 				"stateMutability": "view",
@@ -272,6 +329,11 @@
 						"type": "string"
 					},
 					{
+						"internalType": "string",
+						"name": "description",
+						"type": "string"
+					},
+					{
 						"internalType": "uint256",
 						"name": "requiredBudget",
 						"type": "uint256"
@@ -308,6 +370,13 @@
 					}
 				],
 				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "removeParticipant",
+				"outputs": [],
+				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -416,24 +485,6 @@
 				],
 				"stateMutability": "view",
 				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "_propId",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_numVotes",
-						"type": "uint256"
-					}
-				],
-				"name": "withdrawFromProposal",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
 			}
 		],
 		"devdoc": {
@@ -536,11 +587,11 @@
 			]
 		},
 		"src/QuadraticVoting.sol": {
-			"keccak256": "0xf34ddf1f0e9863625932acfdbaea06c53ce87358e586e2b055c5464f96a5bf0b",
+			"keccak256": "0x9f40a43557709dc2c7bbf45ee762de9329a3a0167b7d354828b177a42ebd586e",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://04b77ad20cd047552b20e8a3831813af2d950620953bdbc654a9e74ac4c91add",
-				"dweb:/ipfs/QmbxYBtGQLsUgU5kAK4D6JmiapZZztxfm6ygsUBXnZxXak"
+				"bzz-raw://db45b8565e37179191cc273149ce42b50e5f4cbf2503355bc3603aec02e9ab01",
+				"dweb:/ipfs/QmYzJJHdkSdqNAsMndL7SGQKzJ3eC96cA8fqSoQsVLGzJw"
 			]
 		}
 	},
