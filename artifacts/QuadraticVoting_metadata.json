@@ -14,7 +14,7 @@
 					},
 					{
 						"internalType": "uint256",
-						"name": "",
+						"name": "_maxTokens",
 						"type": "uint256"
 					}
 				],
@@ -45,6 +45,19 @@
 				"inputs": [
 					{
 						"indexed": true,
+						"internalType": "address",
+						"name": "participant",
+						"type": "address"
+					}
+				],
+				"name": "ParticipantRemoved",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
 						"internalType": "uint256",
 						"name": "id",
 						"type": "uint256"
@@ -54,9 +67,28 @@
 						"internalType": "uint256",
 						"name": "fundsSent",
 						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "threshold",
+						"type": "uint256"
 					}
 				],
 				"name": "ProposalApproved",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "id",
+						"type": "uint256"
+					}
+				],
+				"name": "ProposalCanceled",
 				"type": "event"
 			},
 			{
@@ -79,9 +111,65 @@
 						"internalType": "uint256",
 						"name": "budget",
 						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "bool",
+						"name": "isSignaling",
+						"type": "bool"
 					}
 				],
 				"name": "ProposalCreated",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "buyer",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "costWei",
+						"type": "uint256"
+					}
+				],
+				"name": "TokensPurchased",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "seller",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "refundWei",
+						"type": "uint256"
+					}
+				],
+				"name": "TokensSold",
 				"type": "event"
 			},
 			{
@@ -102,17 +190,61 @@
 					{
 						"indexed": false,
 						"internalType": "uint256",
-						"name": "votes",
+						"name": "votesAdded",
 						"type": "uint256"
 					},
 					{
 						"indexed": false,
 						"internalType": "uint256",
-						"name": "cost",
+						"name": "tokenCost",
 						"type": "uint256"
 					}
 				],
 				"name": "VoteCast",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "proposalId",
+						"type": "uint256"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "voter",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "votesRemoved",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "tokensReturned",
+						"type": "uint256"
+					}
+				],
+				"name": "VotesWithdrawn",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "refundedBudget",
+						"type": "uint256"
+					}
+				],
+				"name": "VotingClosed",
 				"type": "event"
 			},
 			{
@@ -144,7 +276,7 @@
 					},
 					{
 						"internalType": "string",
-						"name": "_desc",
+						"name": "_description",
 						"type": "string"
 					},
 					{
@@ -180,7 +312,7 @@
 				"inputs": [
 					{
 						"internalType": "uint256",
-						"name": "_id",
+						"name": "proposalId",
 						"type": "uint256"
 					}
 				],
@@ -239,7 +371,7 @@
 				"inputs": [
 					{
 						"internalType": "uint256",
-						"name": "_id",
+						"name": "proposalId",
 						"type": "uint256"
 					}
 				],
@@ -272,8 +404,23 @@
 					},
 					{
 						"internalType": "uint256",
-						"name": "votes",
+						"name": "totalVotes",
 						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "totalTokensStaked",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "creator",
+						"type": "address"
+					},
+					{
+						"internalType": "bool",
+						"name": "isSignaling",
+						"type": "bool"
 					}
 				],
 				"stateMutability": "view",
@@ -411,6 +558,11 @@
 						"internalType": "bool",
 						"name": "isSignaling",
 						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "exists",
+						"type": "bool"
 					}
 				],
 				"stateMutability": "view",
@@ -427,7 +579,7 @@
 				"inputs": [
 					{
 						"internalType": "uint256",
-						"name": "_amount",
+						"name": "amount",
 						"type": "uint256"
 					}
 				],
@@ -440,12 +592,12 @@
 				"inputs": [
 					{
 						"internalType": "uint256",
-						"name": "_propId",
+						"name": "proposalId",
 						"type": "uint256"
 					},
 					{
 						"internalType": "uint256",
-						"name": "_numVotes",
+						"name": "votesToAdd",
 						"type": "uint256"
 					}
 				],
@@ -529,6 +681,28 @@
 				],
 				"stateMutability": "view",
 				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "proposalId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "votesToRemove",
+						"type": "uint256"
+					}
+				],
+				"name": "withdrawFromProposal",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"stateMutability": "payable",
+				"type": "receive"
 			}
 		],
 		"devdoc": {
@@ -544,7 +718,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"src/QuadraticVoting.sol": "QuadraticVoting"
+			"src/quadraticVoting.sol": "QuadraticVoting"
 		},
 		"evmVersion": "osaka",
 		"libraries": {},
@@ -552,7 +726,7 @@
 			"bytecodeHash": "ipfs"
 		},
 		"optimizer": {
-			"enabled": true,
+			"enabled": false,
 			"runs": 200
 		},
 		"remappings": []
@@ -614,14 +788,6 @@
 				"dweb:/ipfs/QmadRjHbkicwqwwh61raUEapaVEtaLMcYbQZWs9gUkgj3u"
 			]
 		},
-		"src/GovernanceToken.sol": {
-			"keccak256": "0xfa56632b0d0c0a8fab724f4db501a700ab76c0841ee89e3c0addb650297f20e2",
-			"license": "MIT",
-			"urls": [
-				"bzz-raw://021c0b923f6da9518242ec3f058954d30956d1d29bd760bb2616676e7decae7f",
-				"dweb:/ipfs/QmeQ5bmUAq5J1fv5oNB79NmcUCnXEfmy8HZreKHeJvHDbx"
-			]
-		},
 		"src/IExecutableProposal.sol": {
 			"keccak256": "0x30edf25dd3267f56026e1588b99c205b517503ac56d197644c72c91174c2956d",
 			"license": "MIT",
@@ -630,12 +796,20 @@
 				"dweb:/ipfs/QmeBcbAeP2bDx4mGNPjjJCWNSGAkrtLvMwpzsG6rmx4LdC"
 			]
 		},
-		"src/QuadraticVoting.sol": {
-			"keccak256": "0x3eb19c674a66fb36dc4cb9745b6cd8116e686c995b843d05942bd8b3b286a9d5",
+		"src/governanceToken.sol": {
+			"keccak256": "0x704302b19c2d1e37b6fa514b48241ed4d0dc5b9e3c40a093b3dfe92b95492694",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://7c5e94edf905cd2a0aa879300a595acd33bb721876ae09adb2863a927be5854d",
-				"dweb:/ipfs/QmeZq7Q6U557L4eLDcPGsLzFJMe4r4bQgQ7aZizfMFTqvY"
+				"bzz-raw://6f7333161d5c2b89c2cfcddb5ae721000faed8a554f17cf2bdd11f3b3765d958",
+				"dweb:/ipfs/QmbWaVRKWA3LWp7bWwkQvUXeqjpEiecpn4BdxVBFLavT1a"
+			]
+		},
+		"src/quadraticVoting.sol": {
+			"keccak256": "0x767261cb2d429bbddfeedc07189d9f4fc5b47d7b595c409eaf5bd2aea98d73cb",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://f84a59a9d06d4683f1e5924d1443dbb092fa5879b5b225380b570f799bec81b5",
+				"dweb:/ipfs/QmfSnoK2UchhFy42aRXDLSnNveSzEbN6QD8s1bGNd39yeY"
 			]
 		}
 	},

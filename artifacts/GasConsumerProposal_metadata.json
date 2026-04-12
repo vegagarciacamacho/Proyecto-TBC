@@ -6,22 +6,46 @@
 	"output": {
 		"abi": [
 			{
-				"inputs": [],
-				"name": "testGasLimitProtectsMainContract",
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "executeProposal",
 				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "testReentrancyOnSellTokensIsBlocked",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
 				"stateMutability": "payable",
-				"type": "receive"
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes4",
+						"name": "interfaceId",
+						"type": "bytes4"
+					}
+				],
+				"name": "supportsInterface",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
 			}
 		],
 		"devdoc": {
@@ -37,7 +61,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"tests/security_test.sol": "SecurityTest"
+			"tests/security_test.sol": "GasConsumerProposal"
 		},
 		"evmVersion": "osaka",
 		"libraries": {},

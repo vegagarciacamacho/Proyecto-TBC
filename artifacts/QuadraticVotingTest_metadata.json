@@ -7,59 +7,49 @@
 		"abi": [
 			{
 				"inputs": [],
-				"name": "beforeAll",
+				"name": "testCancelProposalReturnsTokens",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
 				"inputs": [],
-				"name": "testAperturaVotacion",
+				"name": "testConstructorAndERC20Config",
 				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "testOpenVotingAndParticipantLifecycle",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "testProposalApprovalThresholdAndBudgetUpdate",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "testQuadraticStakeAndWithdraw",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "testSignalingExecutionAndCloseResetsCycle",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
 				"stateMutability": "payable",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "testCierreYLiquidacion",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "testEscenarioCicloCompletoDAO",
-				"outputs": [],
-				"stateMutability": "payable",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "testEstadoInicial",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "testLogicaCuadraticaCoste",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "testRegistroYCompraTokens",
-				"outputs": [],
-				"stateMutability": "payable",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "testVentaDeTokens",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
+				"type": "receive"
 			}
 		],
 		"devdoc": {
@@ -69,17 +59,7 @@
 		},
 		"userdoc": {
 			"kind": "user",
-			"methods": {
-				"testAperturaVotacion()": {
-					"notice": "#value: 10000000000"
-				},
-				"testEscenarioCicloCompletoDAO()": {
-					"notice": "#value: 50000000000"
-				},
-				"testRegistroYCompraTokens()": {
-					"notice": "#value: 20000000000"
-				}
-			},
+			"methods": {},
 			"version": 1
 		}
 	},
@@ -93,7 +73,7 @@
 			"bytecodeHash": "ipfs"
 		},
 		"optimizer": {
-			"enabled": true,
+			"enabled": false,
 			"runs": 200
 		},
 		"remappings": []
@@ -163,14 +143,6 @@
 				"dweb:/ipfs/QmadRjHbkicwqwwh61raUEapaVEtaLMcYbQZWs9gUkgj3u"
 			]
 		},
-		"remix_accounts.sol": {
-			"keccak256": "0xab088ffd1cd1033f54c2486f151b5d02281a3b76724c8e6f48479c25a4f7809e",
-			"license": "GPL-3.0",
-			"urls": [
-				"bzz-raw://5ddaf9976b1838f7028cbedfaf7f6e1cf8c898e100221176ff1406ee8b599f23",
-				"dweb:/ipfs/QmX2FYLXYyo5Cn55ZX2CfngpscSh4mQhcMVzQdQsh2vqcG"
-			]
-		},
 		"remix_tests.sol": {
 			"keccak256": "0xe2783cdc204cba8c72494119339f1d90f9022b15d6c718c668b7f097d8e29787",
 			"license": "GPL-3.0",
@@ -188,35 +160,35 @@
 			]
 		},
 		"src/governanceToken.sol": {
-			"keccak256": "0xfa56632b0d0c0a8fab724f4db501a700ab76c0841ee89e3c0addb650297f20e2",
+			"keccak256": "0x704302b19c2d1e37b6fa514b48241ed4d0dc5b9e3c40a093b3dfe92b95492694",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://021c0b923f6da9518242ec3f058954d30956d1d29bd760bb2616676e7decae7f",
-				"dweb:/ipfs/QmeQ5bmUAq5J1fv5oNB79NmcUCnXEfmy8HZreKHeJvHDbx"
+				"bzz-raw://6f7333161d5c2b89c2cfcddb5ae721000faed8a554f17cf2bdd11f3b3765d958",
+				"dweb:/ipfs/QmbWaVRKWA3LWp7bWwkQvUXeqjpEiecpn4BdxVBFLavT1a"
 			]
 		},
 		"src/mocks/mockProposal.sol": {
-			"keccak256": "0x95256fc8164bed3b87ddb93064264bb275c52c23de2ce267283262216b18ec25",
+			"keccak256": "0x05f8b39a1e745d21d9c4f8d88593be370f8f15ca1e6c650353a72b341895dea7",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://1f3f6c8e564781ac2a941a29e03047adad1c3394681e25bc1f183210e038de25",
-				"dweb:/ipfs/QmbgFVqu3tDi3qxvcBrHKkVDRjXx9J7QKFnpqGtfaMq9AD"
+				"bzz-raw://da2d493c1583fc8ce8c5de0d91b083396ffcd79a3425fb4a51a6aac9e56f41b7",
+				"dweb:/ipfs/QmcS7THdd9LjGgJkwrqf1oLfjWRwHZTrghhuvszfke8trB"
 			]
 		},
 		"src/quadraticVoting.sol": {
-			"keccak256": "0x7d80a4d0b7c47825c80c5c844b71a969f81ab5a03c8f269ab25a0a673279aec3",
+			"keccak256": "0x767261cb2d429bbddfeedc07189d9f4fc5b47d7b595c409eaf5bd2aea98d73cb",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://bf77ec986c3a303548805846befdf6ac2370b87cf07355c577fd39bec9297de7",
-				"dweb:/ipfs/QmYN4awJPifbDFh4TqQcLt3UbXUWCoWBeAfk69Vgb4v3AY"
+				"bzz-raw://f84a59a9d06d4683f1e5924d1443dbb092fa5879b5b225380b570f799bec81b5",
+				"dweb:/ipfs/QmfSnoK2UchhFy42aRXDLSnNveSzEbN6QD8s1bGNd39yeY"
 			]
 		},
 		"tests/quadraticVoting_test.sol": {
-			"keccak256": "0x03b5747300cf4b78d3d3b19d18e89cabc05674848fe94310fb8396a765244c5b",
+			"keccak256": "0x81d6832e2a0b9b3d5cb6d2fe0f937e879d770f71f670845be36b034a3f78c440",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://46308d427577f52b2c0fba27cacbf579d1b5baeb81bba0d8a4640e441cad9df5",
-				"dweb:/ipfs/QmVQgjaCPRLnZUnRaPJr9RS9Wq3R2jV2gwB1ibdRBmKLXQ"
+				"bzz-raw://260aa2fa78d8cf74fbded3cc880d58e7937635494e5c254fc2d6053fed2f97c8",
+				"dweb:/ipfs/QmXbyXff7rrb6fixRMP7NohV3aUyuECm8c8P5TQNRw4jbY"
 			]
 		}
 	},

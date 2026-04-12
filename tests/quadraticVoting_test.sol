@@ -1,102 +1,200 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import "remix_tests.sol";
-import "remix_accounts.sol";
 import "../src/quadraticVoting.sol";
 import "../src/mocks/mockProposal.sol";
 
+contract ParticipantActor {
+    receive() external payable {}
+
+    function addParticipant(QuadraticVoting voting) external payable {
+        voting.addParticipant{value: msg.value}();
+    }
+
+    function buyTokens(QuadraticVoting voting) external payable {
+        voting.buyTokens{value: msg.value}();
+    }
+
+    function approveToken(GovernanceToken token, address spender, uint256 amount) external {
+        token.approve(spender, amount);
+    }
+
+    function addProposal(
+        QuadraticVoting voting,
+        string memory title,
+        string memory description,
+        uint256 budget,
+        address exec
+    ) external returns (uint256) {
+        return voting.addProposal(title, description, budget, exec);
+    }
+
+    function stake(QuadraticVoting voting, uint256 proposalId, uint256 votes) external {
+        voting.stake(proposalId, votes);
+    }
+
+    function withdrawFromProposal(QuadraticVoting voting, uint256 proposalId, uint256 votes) external {
+        voting.withdrawFromProposal(proposalId, votes);
+    }
+
+    function cancelProposal(QuadraticVoting voting, uint256 proposalId) external {
+        voting.cancelProposal(proposalId);
+    }
+
+    function sellTokens(QuadraticVoting voting, uint256 amount) external {
+        voting.sellTokens(amount);
+    }
+
+    function removeParticipant(QuadraticVoting voting) external {
+        voting.removeParticipant();
+    }
+
+    function tokenBalance(GovernanceToken token) external view returns (uint256) {
+        return token.balanceOf(address(this));
+    }
+}
+
 contract QuadraticVotingTest {
-    QuadraticVoting voting;
-    MockProposal mockProp;
-    GovernanceToken token;
-    
-    address owner;
-    uint256 tokenPrice = 1 gwei;
+    uint256 constant TOKEN_PRICE = 1 gwei;
+    uint256 constant MAX_TOKENS = 1000;
 
-    // Preparación del entorno
-    function beforeAll() public {
-        owner = TestsAccounts.getAccount(0);
-        // Desplegamos el motor con un precio de 1 Gwei por token
-        voting = new QuadraticVoting(tokenPrice, 1000000);
-        mockProp = new MockProposal();
+    function _setup()
+        internal
+        returns (
+            QuadraticVoting voting,
+            GovernanceToken token,
+            MockProposal executable,
+            ParticipantActor alice,
+            ParticipantActor bob
+        )
+    {
+        voting = new QuadraticVoting(TOKEN_PRICE, MAX_TOKENS);
         token = GovernanceToken(voting.getERC20());
+        executable = new MockProposal();
+        alice = new ParticipantActor();
+        bob = new ParticipantActor();
     }
 
-    // --- BLOQUE 1: PRUEBAS INDIVIDUALES (FUNCIONALIDAD SEPARADA) ---
-
-    function testEstadoInicial() public {
-        Assert.equal(voting.votingOpen(), false, "La votacion debe empezar cerrada");
-        Assert.equal(voting.tokenPriceWei(), tokenPrice, "El precio del token no coincide");
+    function _fund(address payable to, uint256 amount) internal {
+        (bool success, ) = to.call{value: amount}("");
+        require(success, "Funding helper failed");
     }
 
-    /// #value: 10000000000
-    function testAperturaVotacion() public payable {
-        // Abrimos con 10 Gwei de presupuesto inicial [cite: 22]
-        voting.openVoting{value: 10 * tokenPrice}();
-        Assert.equal(voting.votingOpen(), true, "La votacion deberia estar abierta");
-        Assert.equal(voting.totalBudget(), 10 * tokenPrice, "Presupuesto inicial incorrecto");
+    function testConstructorAndERC20Config() public {
+        (QuadraticVoting voting, GovernanceToken token,,,) = _setup();
+        Assert.equal(voting.tokenPriceWei(), TOKEN_PRICE, "Incorrect token price");
+        Assert.equal(token.maxSupply(), MAX_TOKENS, "Incorrect cap");
+        Assert.equal(voting.votingOpen(), false, "Voting should start closed");
     }
 
-    /// #value: 20000000000
-    function testRegistroYCompraTokens() public payable {
-        // El contrato de test actúa como participante comprando 20 tokens
-        voting.addParticipant{value: 20 * tokenPrice}();
-        Assert.equal(voting.isParticipant(address(this)), true, "Error al registrar participante");
-        Assert.equal(token.balanceOf(address(this)), 20, "No se mintearon los tokens correctos");
+    function testOpenVotingAndParticipantLifecycle() public {
+        (QuadraticVoting voting, GovernanceToken token,, ParticipantActor alice,) = _setup();
+        voting.openVoting{value: 10 * TOKEN_PRICE}();
+        Assert.equal(voting.totalBudget(), 10 * TOKEN_PRICE, "Initial budget mismatch");
+
+        _fund(payable(address(alice)), 25 * TOKEN_PRICE);
+        alice.addParticipant{value: 10 * TOKEN_PRICE}(voting);
+        Assert.ok(voting.isParticipant(address(alice)), "Alice should be participant");
+        Assert.equal(voting.numParticipants(), 1, "Participant count mismatch");
+        Assert.equal(alice.tokenBalance(token), 10, "Alice token purchase mismatch");
+
+        alice.removeParticipant(voting);
+        Assert.ok(!voting.isParticipant(address(alice)), "Alice should be removed");
+        Assert.equal(voting.numParticipants(), 0, "Participant count should decrease");
     }
 
-    function testLogicaCuadraticaCoste() public {
-        // Crear propuesta para votar
-        uint256 id = voting.addProposal("Test Cuadratico", "Desc", 5 * tokenPrice, address(mockProp));
-        
-        // Votamos 3 votos. Coste: 3^2 = 9 tokens 
-        token.approve(address(voting), 9);
-        voting.stake(id, 3);
-        
-        Assert.equal(token.balanceOf(address(this)), 11, "Deberian quedar 11 tokens (20 - 9)");
-        
-        // Votamos 1 voto más. Coste: (4^2) - (3^2) = 16 - 9 = 7 tokens
-        token.approve(address(voting), 7);
-        voting.stake(id, 1);
-        
-        Assert.equal(token.balanceOf(address(this)), 4, "Deberian quedar 4 tokens (11 - 7)");
+    function testQuadraticStakeAndWithdraw() public {
+        (QuadraticVoting voting, GovernanceToken token, MockProposal executable, ParticipantActor alice,) = _setup();
+        voting.openVoting{value: 30 * TOKEN_PRICE}();
+
+        _fund(payable(address(alice)), 30 * TOKEN_PRICE);
+        alice.addParticipant{value: 20 * TOKEN_PRICE}(voting);
+        uint256 proposalId = alice.addProposal(voting, "QV", "Quadratic cost", 25 * TOKEN_PRICE, address(executable));
+
+        alice.approveToken(token, address(voting), 16);
+        alice.stake(voting, proposalId, 4);
+        Assert.equal(alice.tokenBalance(token), 4, "4 votes should cost 16 tokens");
+
+        alice.withdrawFromProposal(voting, proposalId, 2);
+        Assert.equal(alice.tokenBalance(token), 16, "Withdrawing 2 votes from 4 should refund 12 tokens");
+
+        (, , , , , uint256 totalVotes, uint256 totalTokensStaked, , ) = voting.getProposalInfo(proposalId);
+        Assert.equal(totalVotes, 2, "Votes after withdrawal mismatch");
+        Assert.equal(totalTokensStaked, 4, "Staked tokens after withdrawal mismatch");
     }
 
-    function testVentaDeTokens() public {
-        // Vendemos los 4 tokens restantes. Deberia devolvernos 4 Gwei 
-        uint256 balanceAntes = address(this).balance;
-        voting.sellTokens(4);
-        Assert.equal(token.balanceOf(address(this)), 0, "No se quemaron los tokens");
-        Assert.ok(address(this).balance > balanceAntes, "No se recibio el reembolso en Ether");
+    function testProposalApprovalThresholdAndBudgetUpdate() public {
+        (QuadraticVoting voting, GovernanceToken token, MockProposal executable, ParticipantActor alice, ParticipantActor bob) = _setup();
+        voting.openVoting{value: 20 * TOKEN_PRICE}();
+
+        _fund(payable(address(alice)), 60 * TOKEN_PRICE);
+        _fund(payable(address(bob)), 60 * TOKEN_PRICE);
+        alice.addParticipant{value: 25 * TOKEN_PRICE}(voting);
+        bob.addParticipant{value: 25 * TOKEN_PRICE}(voting);
+
+        uint256 proposalId = alice.addProposal(voting, "Funded", "Funded proposal", 5 * TOKEN_PRICE, address(executable));
+        uint256[] memory pending = voting.getPendingProposals();
+        Assert.equal(pending.length, 1, "There should be one pending proposal");
+
+        alice.approveToken(token, address(voting), 9);
+        bob.approveToken(token, address(voting), 9);
+        alice.stake(voting, proposalId, 3);
+        bob.stake(voting, proposalId, 3);
+
+        uint256[] memory approved = voting.getApprovedProposals();
+        Assert.equal(approved.length, 1, "Proposal should be approved");
+        Assert.equal(approved[0], proposalId, "Approved id mismatch");
+
+        (, , , , QuadraticVoting.ProposalStatus status, uint256 totalVotes, uint256 totalTokensStaked, , ) = voting.getProposalInfo(proposalId);
+        Assert.equal(uint256(status), uint256(QuadraticVoting.ProposalStatus.Approved), "Wrong status");
+        Assert.equal(totalVotes, 6, "Approved vote total mismatch");
+        Assert.equal(totalTokensStaked, 18, "Approved token total mismatch");
+        Assert.equal(voting.totalBudget(), 33 * TOKEN_PRICE, "Budget should add 18 and subtract 5 from initial 20");
+        Assert.equal(token.balanceOf(address(voting)), 0, "Consumed voting tokens should be burned");
     }
 
-    // --- BLOQUE 2: GUION DE PRUEBAS CONJUNTAS (ESCENARIO INTEGRADO) ---
+    function testCancelProposalReturnsTokens() public {
+        (QuadraticVoting voting, GovernanceToken token, MockProposal executable, ParticipantActor alice,) = _setup();
+        voting.openVoting{value: 10 * TOKEN_PRICE}();
 
-    /// #value: 50000000000
-    function testEscenarioCicloCompletoDAO() public payable {
-        // 1. Nuevo registro con fondos frescos
-        voting.addParticipant{value: 50 * tokenPrice}();
-        
-        // 2. Crear propuesta de financiacion (Coste 2 Gwei)
-        uint256 propId = voting.addProposal("Propuesta Final", "Inversion", 2 * tokenPrice, address(mockProp));
-        
-        // 3. Votar para superar el umbral
-        // Ponemos 6 votos (36 tokens). Esto deberia disparar la ejecucion automatica [cite: 38]
-        token.approve(address(voting), 36);
-        voting.stake(propId, 6);
-        
-        // 4. Verificar presupuesto dinamico [cite: 39]
-        // Presupuesto = Presupuesto_Actual + Valor_Tokens_Votos - Coste_Propuesta
-        // Nota: El presupuesto actual depende de los tests anteriores
-        (,,,,QuadraticVoting.ProposalStatus status,,,,) = voting.proposals(propId);
-        Assert.equal(uint(status), uint(QuadraticVoting.ProposalStatus.Approved), "La propuesta no se aprobo");
+        _fund(payable(address(alice)), 30 * TOKEN_PRICE);
+        alice.addParticipant{value: 10 * TOKEN_PRICE}(voting);
+        uint256 proposalId = alice.addProposal(voting, "Cancelable", "Desc", 9 * TOKEN_PRICE, address(executable));
+        alice.approveToken(token, address(voting), 9);
+        alice.stake(voting, proposalId, 3);
+        Assert.equal(alice.tokenBalance(token), 1, "Alice should have 1 token left before cancel");
+
+        alice.cancelProposal(voting, proposalId);
+        Assert.equal(alice.tokenBalance(token), 10, "Cancel should return all staked tokens");
     }
 
-    function testCierreYLiquidacion() public {
-        // Al cerrar, el owner recibe el presupuesto sobrante mediante .call [cite: 56, 57]
+    function testSignalingExecutionAndCloseResetsCycle() public {
+        (QuadraticVoting voting, GovernanceToken token, MockProposal executable, ParticipantActor alice,) = _setup();
+        voting.openVoting{value: 50 * TOKEN_PRICE}();
+
+        _fund(payable(address(alice)), 30 * TOKEN_PRICE);
+        alice.addParticipant{value: 16 * TOKEN_PRICE}(voting);
+        uint256 signalingId = alice.addProposal(voting, "Signal", "Preference", 0, address(executable));
+        uint256[] memory signaling = voting.getSignalingProposals();
+        Assert.equal(signaling.length, 1, "There should be one signaling proposal");
+        Assert.equal(signaling[0], signalingId, "Wrong signaling id");
+
+        alice.approveToken(token, address(voting), 9);
+        alice.stake(voting, signalingId, 3);
+        Assert.equal(alice.tokenBalance(token), 7, "Alice should have 7 tokens left before close");
+
+        uint256 ownerBefore = address(this).balance;
         voting.closeVoting();
-        Assert.equal(voting.votingOpen(), false, "Fallo al cerrar votacion");
-        Assert.equal(voting.totalBudget(), 0, "El presupuesto deberia estar a cero tras liquidar");
+        Assert.equal(voting.votingOpen(), false, "Voting should be closed");
+        Assert.equal(voting.totalBudget(), 0, "Budget should be cleared");
+        Assert.equal(alice.tokenBalance(token), 16, "Signaling votes should be refunded at close");
+        Assert.ok(address(this).balance >= ownerBefore + (50 * TOKEN_PRICE), "Owner should receive remaining budget");
+
+        voting.openVoting{value: 5 * TOKEN_PRICE}();
+        uint256 newId = alice.addProposal(voting, "New cycle", "Restart ok", 0, address(executable));
+        Assert.equal(newId, 0, "Proposal ids should restart after close");
     }
+
+    receive() external payable {}
 }

@@ -1,69 +1,85 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import "remix_tests.sol";
 import "../src/quadraticVoting.sol";
 import "../src/IExecutableProposal.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
-// --- CONTRATO ATACANTE ---
-// Simula un contrato que intenta consumir todo el gas o hacer reentrada
-contract MaliciousProposal is IExecutableProposal, ERC165 {
-    bool public attacked;
-
+contract GasConsumerProposal is IExecutableProposal, ERC165 {
     function supportsInterface(bytes4 interfaceId) public view override(ERC165, IERC165) returns (bool) {
         return interfaceId == type(IExecutableProposal).interfaceId || super.supportsInterface(interfaceId);
     }
 
     function executeProposal(uint256, uint256, uint256) external payable override {
-        attacked = true;
-        
-        // INTENTO DE ATAQUE 1: Bucle infinito para agotar el gas
-        // Gracias al límite de 100k gas en QuadraticVoting.sol, esto no romperá la DAO
-        while(true) {
-            // Bucle infinito
-        }
+        while (true) {}
     }
 }
 
-// --- SUITE DE PRUEBAS DE SEGURIDAD ---
-contract SecurityTest {
-    QuadraticVoting voting;
-    MaliciousProposal attacker;
-    uint256 tokenPrice = 1 gwei;
+contract ReentrantSeller {
+    QuadraticVoting public voting;
+    GovernanceToken public token;
+    bool public reentered;
 
-    function beforeAll() public {
-        voting = new QuadraticVoting(tokenPrice, 1000000);
-        attacker = new MaliciousProposal();
+    constructor(QuadraticVoting _voting) {
+        voting = _voting;
+        token = GovernanceToken(_voting.getERC20());
     }
 
-    /// #value: 10000000000
-    function testProteccionGasLimit() public payable {
-        // 1. Preparamos el escenario
-        voting.openVoting{value: 10 * tokenPrice}();
-        voting.addParticipant{value: 20 * tokenPrice}();
-        
-        // 2. Creamos la propuesta maliciosa
-        uint256 id = voting.addProposal("Ataque Gas", "Intento de DoS", 1 * tokenPrice, address(attacker));
-        
-        // 3. Votamos para ejecutarla
-        GovernanceToken token = GovernanceToken(voting.getERC20());
-        token.approve(address(voting), 25); // 5 votos = 25 tokens
-        
-        // 4. EJECUCIÓN: El sistema llamará al atacante.
-        // Como pusimos gas: 100000 en el .call del motor, la DAO NO se quedará bloqueada.
-        // La transacción fallará solo para esa propuesta, pero el motor seguirá vivo.
-        try voting.stake(id, 5) {
-            Assert.ok(false, "La ejecucion deberia haber fallado por gas, pero el motor debe seguir funcionando");
-        } catch {
-            Assert.ok(true, "El limite de gas protegio el contrato principal");
+    receive() external payable {
+        if (!reentered) {
+            reentered = true;
+            try voting.sellTokens(1) {
+            } catch {
+            }
         }
     }
 
-    function testCheckEffectsInteractions() public {
-        // En tu memoria, explica que QuadraticVoting.sol actualiza el estado 
-        // (p.status = Approved) ANTES de la llamada externa. 
-        // Esto previene ataques de reentrada donde el atacante intente ejecutarse dos veces.
-        Assert.ok(true, "Logica Checks-Effects-Interactions validada");
+    function joinAndBuy() external payable {
+        voting.addParticipant{value: msg.value}();
     }
+
+    function attemptSell(uint256 amount) external {
+        voting.sellTokens(amount);
+    }
+}
+
+contract SecurityTest {
+    uint256 constant TOKEN_PRICE = 1 gwei;
+
+    function testGasLimitProtectsMainContract() public {
+        QuadraticVoting voting = new QuadraticVoting(TOKEN_PRICE, 1000);
+        GovernanceToken token = GovernanceToken(voting.getERC20());
+        GasConsumerProposal malicious = new GasConsumerProposal();
+
+        voting.openVoting{value: 10 * TOKEN_PRICE}();
+        voting.addParticipant{value: 30 * TOKEN_PRICE}();
+
+        uint256 id = voting.addProposal("Gas", "DoS attempt", 1 * TOKEN_PRICE, address(malicious));
+        token.approve(address(voting), 25);
+
+        try voting.stake(id, 5) {
+            Assert.ok(false, "Stake should revert because proposal execution exhausts 100k gas budget");
+        } catch {
+            Assert.ok(voting.votingOpen(), "Voting contract should remain alive after failed external execution");
+        }
+    }
+
+    function testReentrancyOnSellTokensIsBlocked() public {
+        QuadraticVoting voting = new QuadraticVoting(TOKEN_PRICE, 1000);
+        ReentrantSeller attacker = new ReentrantSeller(voting);
+        GovernanceToken token = GovernanceToken(voting.getERC20());
+
+        voting.openVoting{value: 20 * TOKEN_PRICE}();
+        (bool sent, ) = payable(address(attacker)).call{value: 5 * TOKEN_PRICE}("");
+        require(sent, "Funding attacker failed");
+        attacker.joinAndBuy{value: 5 * TOKEN_PRICE}();
+        Assert.equal(token.balanceOf(address(attacker)), 5, "Attacker should own 5 tokens");
+
+        attacker.attemptSell(1);
+        Assert.equal(token.balanceOf(address(attacker)), 4, "Only one token should be sold");
+        Assert.ok(attacker.reentered(), "Attacker fallback should have attempted reentrancy");
+    }
+
+    receive() external payable {}
 }

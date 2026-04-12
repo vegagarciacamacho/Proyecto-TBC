@@ -6,15 +6,203 @@
 	"output": {
 		"abi": [
 			{
-				"inputs": [],
-				"name": "testGasLimitProtectsMainContract",
+				"inputs": [
+					{
+						"internalType": "contract QuadraticVoting",
+						"name": "voting",
+						"type": "address"
+					}
+				],
+				"name": "addParticipant",
+				"outputs": [],
+				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "contract QuadraticVoting",
+						"name": "voting",
+						"type": "address"
+					},
+					{
+						"internalType": "string",
+						"name": "title",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "description",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "budget",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "exec",
+						"type": "address"
+					}
+				],
+				"name": "addProposal",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "contract GovernanceToken",
+						"name": "token",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "spender",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "approveToken",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
-				"inputs": [],
-				"name": "testReentrancyOnSellTokensIsBlocked",
+				"inputs": [
+					{
+						"internalType": "contract QuadraticVoting",
+						"name": "voting",
+						"type": "address"
+					}
+				],
+				"name": "buyTokens",
+				"outputs": [],
+				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "contract QuadraticVoting",
+						"name": "voting",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "proposalId",
+						"type": "uint256"
+					}
+				],
+				"name": "cancelProposal",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "contract QuadraticVoting",
+						"name": "voting",
+						"type": "address"
+					}
+				],
+				"name": "removeParticipant",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "contract QuadraticVoting",
+						"name": "voting",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "sellTokens",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "contract QuadraticVoting",
+						"name": "voting",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "proposalId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "votes",
+						"type": "uint256"
+					}
+				],
+				"name": "stake",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "contract GovernanceToken",
+						"name": "token",
+						"type": "address"
+					}
+				],
+				"name": "tokenBalance",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "contract QuadraticVoting",
+						"name": "voting",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "proposalId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "votes",
+						"type": "uint256"
+					}
+				],
+				"name": "withdrawFromProposal",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -37,7 +225,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"tests/security_test.sol": "SecurityTest"
+			"tests/quadraticVoting_test.sol": "ParticipantActor"
 		},
 		"evmVersion": "osaka",
 		"libraries": {},
@@ -139,6 +327,14 @@
 				"dweb:/ipfs/QmbWaVRKWA3LWp7bWwkQvUXeqjpEiecpn4BdxVBFLavT1a"
 			]
 		},
+		"src/mocks/mockProposal.sol": {
+			"keccak256": "0x05f8b39a1e745d21d9c4f8d88593be370f8f15ca1e6c650353a72b341895dea7",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://da2d493c1583fc8ce8c5de0d91b083396ffcd79a3425fb4a51a6aac9e56f41b7",
+				"dweb:/ipfs/QmcS7THdd9LjGgJkwrqf1oLfjWRwHZTrghhuvszfke8trB"
+			]
+		},
 		"src/quadraticVoting.sol": {
 			"keccak256": "0x767261cb2d429bbddfeedc07189d9f4fc5b47d7b595c409eaf5bd2aea98d73cb",
 			"license": "MIT",
@@ -147,12 +343,12 @@
 				"dweb:/ipfs/QmfSnoK2UchhFy42aRXDLSnNveSzEbN6QD8s1bGNd39yeY"
 			]
 		},
-		"tests/security_test.sol": {
-			"keccak256": "0xc2d7d0305393104d2566ab4c825822bdf495cb1aad8d8e721213297c01994d56",
+		"tests/quadraticVoting_test.sol": {
+			"keccak256": "0x81d6832e2a0b9b3d5cb6d2fe0f937e879d770f71f670845be36b034a3f78c440",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://067adbe234826cfedf232b4096e9656aa440e476bf6ab76a5b2c1eaa5d1ca859",
-				"dweb:/ipfs/QmUJ9mM8VdYnrAkpAck8HfKaceqaPE7fkL9fug3mih5K4B"
+				"bzz-raw://260aa2fa78d8cf74fbded3cc880d58e7937635494e5c254fc2d6053fed2f97c8",
+				"dweb:/ipfs/QmXbyXff7rrb6fixRMP7NohV3aUyuECm8c8P5TQNRw4jbY"
 			]
 		}
 	},
