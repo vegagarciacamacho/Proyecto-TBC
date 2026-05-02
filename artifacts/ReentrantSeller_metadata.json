@@ -1,6 +1,6 @@
 {
 	"compiler": {
-		"version": "0.8.31+commit.fd3a2265"
+		"version": "0.8.30+commit.73712a01"
 	},
 	"language": "Solidity",
 	"output": {
@@ -93,16 +93,16 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"tests/security_test.sol": "ReentrantSeller"
+			"tests/extra/tests_completos.sol": "ReentrantSeller"
 		},
-		"evmVersion": "osaka",
+		"evmVersion": "prague",
 		"libraries": {},
 		"metadata": {
 			"bytecodeHash": "ipfs"
 		},
 		"optimizer": {
-			"enabled": false,
-			"runs": 200
+			"enabled": true,
+			"runs": 1
 		},
 		"remappings": []
 	},
@@ -188,27 +188,35 @@
 			]
 		},
 		"src/governanceToken.sol": {
-			"keccak256": "0x704302b19c2d1e37b6fa514b48241ed4d0dc5b9e3c40a093b3dfe92b95492694",
+			"keccak256": "0x6c318e2eadcf83b8c10af1938d31267a95c4572611941500e73d46984d0e3b0b",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://6f7333161d5c2b89c2cfcddb5ae721000faed8a554f17cf2bdd11f3b3765d958",
-				"dweb:/ipfs/QmbWaVRKWA3LWp7bWwkQvUXeqjpEiecpn4BdxVBFLavT1a"
+				"bzz-raw://ae71e86ec656c7cb1c3fab80786918b79458189c195c486951ec2f6361d4db78",
+				"dweb:/ipfs/QmWQ6Ts4CabPERNv7cdtrhVQ9wAUTGQNRWBf298HRQXfSJ"
+			]
+		},
+		"src/mocks/mockProposal.sol": {
+			"keccak256": "0x05f8b39a1e745d21d9c4f8d88593be370f8f15ca1e6c650353a72b341895dea7",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://da2d493c1583fc8ce8c5de0d91b083396ffcd79a3425fb4a51a6aac9e56f41b7",
+				"dweb:/ipfs/QmcS7THdd9LjGgJkwrqf1oLfjWRwHZTrghhuvszfke8trB"
 			]
 		},
 		"src/quadraticVoting.sol": {
-			"keccak256": "0x767261cb2d429bbddfeedc07189d9f4fc5b47d7b595c409eaf5bd2aea98d73cb",
+			"keccak256": "0x4f119e40c7c5230067d1dfeac259154ad41c7b01bfd49609041d8d9ca7e52b6d",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://f84a59a9d06d4683f1e5924d1443dbb092fa5879b5b225380b570f799bec81b5",
-				"dweb:/ipfs/QmfSnoK2UchhFy42aRXDLSnNveSzEbN6QD8s1bGNd39yeY"
+				"bzz-raw://bebb21057f1abd6af9437a6ce53d20ec966b36fbc80c5a56784a6071eb982c86",
+				"dweb:/ipfs/QmZfjwCL8WCDb63YdavGbazfqazyM1aFfsrTmZgJdXEkAT"
 			]
 		},
-		"tests/security_test.sol": {
-			"keccak256": "0xc2d7d0305393104d2566ab4c825822bdf495cb1aad8d8e721213297c01994d56",
+		"tests/extra/tests_completos.sol": {
+			"keccak256": "0x4a75742d22dd2877ba57831d79594783db37aa6a9a8c6bce94eaf293b1813190",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://067adbe234826cfedf232b4096e9656aa440e476bf6ab76a5b2c1eaa5d1ca859",
-				"dweb:/ipfs/QmUJ9mM8VdYnrAkpAck8HfKaceqaPE7fkL9fug3mih5K4B"
+				"bzz-raw://a0e337db8d6f9e8246b65a158ad590994e6636795db91b133a33f3c69a7bebc3",
+				"dweb:/ipfs/QmQkcRvNar2PoCLmVfa9xyuvM8VBeCqf11aVRmVXLXuM3Q"
 			]
 		}
 	},

@@ -1,6 +1,6 @@
 {
 	"compiler": {
-		"version": "0.8.31+commit.fd3a2265"
+		"version": "0.8.30+commit.73712a01"
 	},
 	"language": "Solidity",
 	"output": {
@@ -257,7 +257,7 @@
 						"type": "uint8"
 					}
 				],
-				"stateMutability": "view",
+				"stateMutability": "pure",
 				"type": "function"
 			},
 			{
@@ -502,7 +502,7 @@
 		"compilationTarget": {
 			"src/governanceToken.sol": "GovernanceToken"
 		},
-		"evmVersion": "osaka",
+		"evmVersion": "prague",
 		"libraries": {},
 		"metadata": {
 			"bytecodeHash": "ipfs"
@@ -555,11 +555,11 @@
 			]
 		},
 		"src/governanceToken.sol": {
-			"keccak256": "0x704302b19c2d1e37b6fa514b48241ed4d0dc5b9e3c40a093b3dfe92b95492694",
+			"keccak256": "0x6c318e2eadcf83b8c10af1938d31267a95c4572611941500e73d46984d0e3b0b",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://6f7333161d5c2b89c2cfcddb5ae721000faed8a554f17cf2bdd11f3b3765d958",
-				"dweb:/ipfs/QmbWaVRKWA3LWp7bWwkQvUXeqjpEiecpn4BdxVBFLavT1a"
+				"bzz-raw://ae71e86ec656c7cb1c3fab80786918b79458189c195c486951ec2f6361d4db78",
+				"dweb:/ipfs/QmWQ6Ts4CabPERNv7cdtrhVQ9wAUTGQNRWBf298HRQXfSJ"
 			]
 		}
 	},

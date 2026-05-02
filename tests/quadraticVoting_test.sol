@@ -1,199 +1,439 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+// IMPORTANTE PARA REMIX:
+// Este archivo contiene pruebas pequeñas para que el contrato de test no supere
+// el límite de tamaño de bytecode. Compilar con optimizer activado, runs = 200.
+
 import "remix_tests.sol";
 import "../src/quadraticVoting.sol";
-import "../src/mocks/mockProposal.sol";
+import "../src/governanceToken.sol";
+import "../src/IExecutableProposal.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
-contract ParticipantActor {
+
+contract QuadraticVotingLiteTest {
+    uint256 constant P = 1 gwei;
+    uint256 constant M = 1000;
+
+    function testConstructorOpenAndJoin() public {
+        QuadraticVoting v = new QuadraticVoting(P, M);
+        GovernanceToken t = GovernanceToken(v.getERC20());
+
+        Assert.equal(v.tokenPriceWei(), P, "E1");
+        Assert.equal(t.maxSupply(), M, "E2");
+        Assert.equal(v.votingOpen(), false, "E3");
+
+        v.openVoting{value: 10 * P}();
+        v.addParticipant{value: 5 * P}();
+
+        Assert.equal(v.votingOpen(), true, "E4");
+        Assert.equal(v.totalBudget(), 10 * P, "E5");
+        Assert.equal(v.isParticipant(address(this)), true, "E6");
+        Assert.equal(t.balanceOf(address(this)), 5, "E7");
+    }
+
     receive() external payable {}
-
-    function addParticipant(QuadraticVoting voting) external payable {
-        voting.addParticipant{value: msg.value}();
-    }
-
-    function buyTokens(QuadraticVoting voting) external payable {
-        voting.buyTokens{value: msg.value}();
-    }
-
-    function approveToken(GovernanceToken token, address spender, uint256 amount) external {
-        token.approve(spender, amount);
-    }
-
-    function addProposal(
-        QuadraticVoting voting,
-        string memory title,
-        string memory description,
-        uint256 budget,
-        address exec
-    ) external returns (uint256) {
-        return voting.addProposal(title, description, budget, exec);
-    }
-
-    function stake(QuadraticVoting voting, uint256 proposalId, uint256 votes) external {
-        voting.stake(proposalId, votes);
-    }
-
-    function withdrawFromProposal(QuadraticVoting voting, uint256 proposalId, uint256 votes) external {
-        voting.withdrawFromProposal(proposalId, votes);
-    }
-
-    function cancelProposal(QuadraticVoting voting, uint256 proposalId) external {
-        voting.cancelProposal(proposalId);
-    }
-
-    function sellTokens(QuadraticVoting voting, uint256 amount) external {
-        voting.sellTokens(amount);
-    }
-
-    function removeParticipant(QuadraticVoting voting) external {
-        voting.removeParticipant();
-    }
-
-    function tokenBalance(GovernanceToken token) external view returns (uint256) {
-        return token.balanceOf(address(this));
-    }
 }
 
-contract QuadraticVotingTest {
-    uint256 constant TOKEN_PRICE = 1 gwei;
-    uint256 constant MAX_TOKENS = 1000;
+contract TestProposal is IExecutableProposal, ERC165 {
+    uint256 public executions;
+    uint256 public lastId;
+    uint256 public lastVotes;
+    uint256 public lastTokens;
+    uint256 public lastValue;
 
-    function _setup()
-        internal
-        returns (
-            QuadraticVoting voting,
-            GovernanceToken token,
-            MockProposal executable,
-            ParticipantActor alice,
-            ParticipantActor bob
-        )
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC165, IERC165)
+        returns (bool)
     {
-        voting = new QuadraticVoting(TOKEN_PRICE, MAX_TOKENS);
-        token = GovernanceToken(voting.getERC20());
-        executable = new MockProposal();
-        alice = new ParticipantActor();
-        bob = new ParticipantActor();
+        return interfaceId == type(IExecutableProposal).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    function _fund(address payable to, uint256 amount) internal {
-        (bool success, ) = to.call{value: amount}("");
-        require(success, "Funding helper failed");
+    function executeProposal(uint256 proposalId, uint256 numVotes, uint256 numTokens)
+        external
+        payable
+        override
+    {
+        executions += 1;
+        lastId = proposalId;
+        lastVotes = numVotes;
+        lastTokens = numTokens;
+        lastValue = msg.value;
     }
 
-    function testConstructorAndERC20Config() public {
-        (QuadraticVoting voting, GovernanceToken token,,,) = _setup();
-        Assert.equal(voting.tokenPriceWei(), TOKEN_PRICE, "Incorrect token price");
-        Assert.equal(token.maxSupply(), MAX_TOKENS, "Incorrect cap");
-        Assert.equal(voting.votingOpen(), false, "Voting should start closed");
+    receive() external payable {}
+}
+
+contract QVStakeWithdrawExtraTest {
+    uint256 constant P = 1 gwei;
+
+    function testStakeAndWithdrawQuadraticCost() public {
+        QuadraticVoting v = new QuadraticVoting(P, 1000);
+        GovernanceToken t = GovernanceToken(v.getERC20());
+        TestProposal p = new TestProposal();
+
+        v.openVoting{value: 30 * P}();
+        v.addParticipant{value: 20 * P}();
+
+        uint256 id = v.addProposal("Q", "D", 0, address(p));
+
+        t.approve(address(v), 16);
+        v.stake(id, 4);
+        Assert.equal(t.balanceOf(address(this)), 4, "E1");
+
+        v.withdrawFromProposal(id, 2);
+        Assert.equal(t.balanceOf(address(this)), 16, "E2");
+
+        (, , , , , uint256 votes, uint256 staked, , ) = v.getProposalInfo(id);
+        Assert.equal(votes, 2, "E3");
+        Assert.equal(staked, 4, "E4");
     }
 
-    function testOpenVotingAndParticipantLifecycle() public {
-        (QuadraticVoting voting, GovernanceToken token,, ParticipantActor alice,) = _setup();
-        voting.openVoting{value: 10 * TOKEN_PRICE}();
-        Assert.equal(voting.totalBudget(), 10 * TOKEN_PRICE, "Initial budget mismatch");
+    receive() external payable {}
+}
 
-        _fund(payable(address(alice)), 25 * TOKEN_PRICE);
-        alice.addParticipant{value: 10 * TOKEN_PRICE}(voting);
-        Assert.ok(voting.isParticipant(address(alice)), "Alice should be participant");
-        Assert.equal(voting.numParticipants(), 1, "Participant count mismatch");
-        Assert.equal(alice.tokenBalance(token), 10, "Alice token purchase mismatch");
+contract QVFundingApprovalExtraTest {
+    uint256 constant P = 1 gwei;
 
-        alice.removeParticipant(voting);
-        Assert.ok(!voting.isParticipant(address(alice)), "Alice should be removed");
-        Assert.equal(voting.numParticipants(), 0, "Participant count should decrease");
+    function testFundingProposalApprovalAndBudget() public {
+        QuadraticVoting v = new QuadraticVoting(P, 1000);
+        GovernanceToken t = GovernanceToken(v.getERC20());
+        TestProposal p = new TestProposal();
+
+        v.openVoting{value: 20 * P}();
+        v.addParticipant{value: 10 * P}();
+
+        uint256 id = v.addProposal("F", "D", 1 * P, address(p));
+        t.approve(address(v), 4);
+        v.stake(id, 2);
+
+        uint256[] memory approved = v.getApprovedProposals();
+        Assert.equal(approved.length, 1, "E1");
+        Assert.equal(approved[0], id, "E2");
+
+        (, , , , QuadraticVoting.ProposalStatus status, uint256 votes, uint256 staked, , ) = v.getProposalInfo(id);
+        Assert.equal(uint256(status), uint256(QuadraticVoting.ProposalStatus.Approved), "E3");
+        Assert.equal(votes, 2, "E4");
+        Assert.equal(staked, 4, "E5");
+        Assert.equal(v.totalBudget(), 23 * P, "E6");
+        Assert.equal(t.balanceOf(address(v)), 0, "E7");
+        Assert.equal(p.executions(), 1, "E8");
+        Assert.equal(p.lastValue(), 1 * P, "E9");
     }
 
-    function testQuadraticStakeAndWithdraw() public {
-        (QuadraticVoting voting, GovernanceToken token, MockProposal executable, ParticipantActor alice,) = _setup();
-        voting.openVoting{value: 30 * TOKEN_PRICE}();
+    receive() external payable {}
+}
 
-        _fund(payable(address(alice)), 30 * TOKEN_PRICE);
-        alice.addParticipant{value: 20 * TOKEN_PRICE}(voting);
-        uint256 proposalId = alice.addProposal(voting, "QV", "Quadratic cost", 25 * TOKEN_PRICE, address(executable));
+contract QVInsufficientBudgetExtraTest {
+    uint256 constant P = 1 gwei;
 
-        alice.approveToken(token, address(voting), 16);
-        alice.stake(voting, proposalId, 4);
-        Assert.equal(alice.tokenBalance(token), 4, "4 votes should cost 16 tokens");
+    function testInsufficientBudgetKeepsPendingAndCloseRefunds() public {
+        QuadraticVoting v = new QuadraticVoting(P, 1000);
+        GovernanceToken t = GovernanceToken(v.getERC20());
+        TestProposal p = new TestProposal();
 
-        alice.withdrawFromProposal(voting, proposalId, 2);
-        Assert.equal(alice.tokenBalance(token), 16, "Withdrawing 2 votes from 4 should refund 12 tokens");
+        v.openVoting{value: 5 * P}();
+        v.addParticipant{value: 10 * P}();
 
-        (, , , , , uint256 totalVotes, uint256 totalTokensStaked, , ) = voting.getProposalInfo(proposalId);
-        Assert.equal(totalVotes, 2, "Votes after withdrawal mismatch");
-        Assert.equal(totalTokensStaked, 4, "Staked tokens after withdrawal mismatch");
+        uint256 id = v.addProposal("X", "D", 10 * P, address(p));
+        t.approve(address(v), 4);
+        v.stake(id, 2);
+
+        (, , , , QuadraticVoting.ProposalStatus status, , uint256 staked, , ) = v.getProposalInfo(id);
+        Assert.equal(uint256(status), uint256(QuadraticVoting.ProposalStatus.Pending), "E1");
+        Assert.equal(staked, 4, "E2");
+        Assert.equal(t.balanceOf(address(this)), 6, "E3");
+
+        v.closeVoting();
+        Assert.equal(t.balanceOf(address(this)), 10, "E4");
+        Assert.equal(v.votingOpen(), false, "E5");
     }
 
-    function testProposalApprovalThresholdAndBudgetUpdate() public {
-        (QuadraticVoting voting, GovernanceToken token, MockProposal executable, ParticipantActor alice, ParticipantActor bob) = _setup();
-        voting.openVoting{value: 20 * TOKEN_PRICE}();
+    receive() external payable {}
+}
 
-        _fund(payable(address(alice)), 60 * TOKEN_PRICE);
-        _fund(payable(address(bob)), 60 * TOKEN_PRICE);
-        alice.addParticipant{value: 25 * TOKEN_PRICE}(voting);
-        bob.addParticipant{value: 25 * TOKEN_PRICE}(voting);
+contract QVCancelSignalingExtraTest {
+    uint256 constant P = 1 gwei;
 
-        uint256 proposalId = alice.addProposal(voting, "Funded", "Funded proposal", 5 * TOKEN_PRICE, address(executable));
-        uint256[] memory pending = voting.getPendingProposals();
-        Assert.equal(pending.length, 1, "There should be one pending proposal");
+    function testCanceledSignalingIsRefundedAndNotExecuted() public {
+        QuadraticVoting v = new QuadraticVoting(P, 1000);
+        GovernanceToken t = GovernanceToken(v.getERC20());
+        TestProposal p = new TestProposal();
 
-        alice.approveToken(token, address(voting), 9);
-        bob.approveToken(token, address(voting), 9);
-        alice.stake(voting, proposalId, 3);
-        bob.stake(voting, proposalId, 3);
+        v.openVoting{value: 20 * P}();
+        v.addParticipant{value: 10 * P}();
 
-        uint256[] memory approved = voting.getApprovedProposals();
-        Assert.equal(approved.length, 1, "Proposal should be approved");
-        Assert.equal(approved[0], proposalId, "Approved id mismatch");
+        uint256 id = v.addProposal("S", "D", 0, address(p));
+        t.approve(address(v), 4);
+        v.stake(id, 2);
+        Assert.equal(t.balanceOf(address(this)), 6, "E1");
 
-        (, , , , QuadraticVoting.ProposalStatus status, uint256 totalVotes, uint256 totalTokensStaked, , ) = voting.getProposalInfo(proposalId);
-        Assert.equal(uint256(status), uint256(QuadraticVoting.ProposalStatus.Approved), "Wrong status");
-        Assert.equal(totalVotes, 6, "Approved vote total mismatch");
-        Assert.equal(totalTokensStaked, 18, "Approved token total mismatch");
-        Assert.equal(voting.totalBudget(), 33 * TOKEN_PRICE, "Budget should add 18 and subtract 5 from initial 20");
-        Assert.equal(token.balanceOf(address(voting)), 0, "Consumed voting tokens should be burned");
+        v.cancelProposal(id);
+        Assert.equal(t.balanceOf(address(this)), 10, "E2");
+
+        uint256[] memory sig = v.getSignalingProposals();
+        Assert.equal(sig.length, 0, "E3");
+
+        v.closeVoting();
+        Assert.equal(p.executions(), 0, "E4");
     }
 
-    function testCancelProposalReturnsTokens() public {
-        (QuadraticVoting voting, GovernanceToken token, MockProposal executable, ParticipantActor alice,) = _setup();
-        voting.openVoting{value: 10 * TOKEN_PRICE}();
+    receive() external payable {}
+}
 
-        _fund(payable(address(alice)), 30 * TOKEN_PRICE);
-        alice.addParticipant{value: 10 * TOKEN_PRICE}(voting);
-        uint256 proposalId = alice.addProposal(voting, "Cancelable", "Desc", 9 * TOKEN_PRICE, address(executable));
-        alice.approveToken(token, address(voting), 9);
-        alice.stake(voting, proposalId, 3);
-        Assert.equal(alice.tokenBalance(token), 1, "Alice should have 1 token left before cancel");
+contract QVSignalingCloseExtraTest {
+    uint256 constant P = 1 gwei;
 
-        alice.cancelProposal(voting, proposalId);
-        Assert.equal(alice.tokenBalance(token), 10, "Cancel should return all staked tokens");
+    function testSignalingExecutesOnCloseAndIdsKeepGrowing() public {
+        QuadraticVoting v = new QuadraticVoting(P, 1000);
+        GovernanceToken t = GovernanceToken(v.getERC20());
+        TestProposal p = new TestProposal();
+
+        v.openVoting{value: 50 * P}();
+        v.addParticipant{value: 16 * P}();
+
+        uint256 id1 = v.addProposal("S", "D", 0, address(p));
+        t.approve(address(v), 9);
+        v.stake(id1, 3);
+        Assert.equal(t.balanceOf(address(this)), 7, "E1");
+
+        v.closeVoting();
+        Assert.equal(t.balanceOf(address(this)), 16, "E2");
+        Assert.equal(p.executions(), 1, "E3");
+        Assert.equal(v.totalBudget(), 0, "E4");
+
+        v.openVoting{value: 5 * P}();
+        uint256 id2 = v.addProposal("N", "D", 0, address(p));
+        Assert.ok(id2 != id1, "E5");
     }
 
-    function testSignalingExecutionAndCloseResetsCycle() public {
-        (QuadraticVoting voting, GovernanceToken token, MockProposal executable, ParticipantActor alice,) = _setup();
-        voting.openVoting{value: 50 * TOKEN_PRICE}();
+    receive() external payable {}
+}
 
-        _fund(payable(address(alice)), 30 * TOKEN_PRICE);
-        alice.addParticipant{value: 16 * TOKEN_PRICE}(voting);
-        uint256 signalingId = alice.addProposal(voting, "Signal", "Preference", 0, address(executable));
-        uint256[] memory signaling = voting.getSignalingProposals();
-        Assert.equal(signaling.length, 1, "There should be one signaling proposal");
-        Assert.equal(signaling[0], signalingId, "Wrong signaling id");
+contract QVSecondRoundExtraTest {
+    uint256 constant P = 1 gwei;
 
-        alice.approveToken(token, address(voting), 9);
-        alice.stake(voting, signalingId, 3);
-        Assert.equal(alice.tokenBalance(token), 7, "Alice should have 7 tokens left before close");
+    function testSecondRoundDoesNotReuseOldVotes() public {
+        QuadraticVoting v = new QuadraticVoting(P, 1000);
+        GovernanceToken t = GovernanceToken(v.getERC20());
+        TestProposal p = new TestProposal();
 
-        uint256 ownerBefore = address(this).balance;
-        voting.closeVoting();
-        Assert.equal(voting.votingOpen(), false, "Voting should be closed");
-        Assert.equal(voting.totalBudget(), 0, "Budget should be cleared");
-        Assert.equal(alice.tokenBalance(token), 16, "Signaling votes should be refunded at close");
-        Assert.ok(address(this).balance >= ownerBefore + (50 * TOKEN_PRICE), "Owner should receive remaining budget");
+        v.openVoting{value: 20 * P}();
+        v.addParticipant{value: 16 * P}();
 
-        voting.openVoting{value: 5 * TOKEN_PRICE}();
-        uint256 newId = alice.addProposal(voting, "New cycle", "Restart ok", 0, address(executable));
-        Assert.equal(newId, 0, "Proposal ids should restart after close");
+        uint256 id1 = v.addProposal("F", "D", 1 * P, address(p));
+        t.approve(address(v), 4);
+        v.stake(id1, 2);
+
+        (, , , , QuadraticVoting.ProposalStatus status, , , , ) = v.getProposalInfo(id1);
+        Assert.equal(uint256(status), uint256(QuadraticVoting.ProposalStatus.Approved), "E1");
+        Assert.equal(t.balanceOf(address(this)), 12, "E2");
+
+        v.closeVoting();
+        v.openVoting{value: 20 * P}();
+
+        uint256 id2 = v.addProposal("S", "D", 0, address(p));
+        Assert.ok(id2 != id1, "E3");
+
+        t.approve(address(v), 1);
+        v.stake(id2, 1);
+        Assert.equal(t.balanceOf(address(this)), 11, "E4");
+    }
+
+    receive() external payable {}
+}
+
+contract QVRemovedParticipantExtraTest {
+    uint256 constant P = 1 gwei;
+
+    function testRemovedParticipantCannotActButCanWithdrawOldVotes() public {
+        QuadraticVoting v = new QuadraticVoting(P, 1000);
+        GovernanceToken t = GovernanceToken(v.getERC20());
+        TestProposal p = new TestProposal();
+
+        v.openVoting{value: 20 * P}();
+        v.addParticipant{value: 10 * P}();
+
+        uint256 id = v.addProposal("S", "D", 0, address(p));
+        t.approve(address(v), 9);
+        v.stake(id, 3);
+        Assert.equal(t.balanceOf(address(this)), 1, "E1");
+
+        v.removeParticipant();
+        Assert.equal(v.isParticipant(address(this)), false, "E2");
+
+        try this.tryStake(v, id) {
+            Assert.ok(false, "E3");
+        } catch {
+            Assert.ok(true, "E4");
+        }
+
+        try this.tryAddProposal(v, address(p)) returns (uint256) {
+            Assert.ok(false, "E5");
+        } catch {
+            Assert.ok(true, "E6");
+        }
+
+        try this.tryBuy{value: P}(v) {
+            Assert.ok(false, "E7");
+        } catch {
+            Assert.ok(true, "E8");
+        }
+
+        v.withdrawFromProposal(id, 2);
+        Assert.equal(t.balanceOf(address(this)), 9, "E9");
+    }
+
+    function tryStake(QuadraticVoting v, uint256 id) external {
+        v.stake(id, 1);
+    }
+
+    function tryAddProposal(QuadraticVoting v, address p) external returns (uint256) {
+        return v.addProposal("X", "D", 0, p);
+    }
+
+    function tryBuy(QuadraticVoting v) external payable {
+        v.buyTokens{value: msg.value}();
+    }
+
+    receive() external payable {}
+}
+
+contract QVNonOwnerActor {
+    function open(QuadraticVoting v) external payable {
+        v.openVoting{value: msg.value}();
+    }
+
+    function close(QuadraticVoting v) external {
+        v.closeVoting();
+    }
+
+    receive() external payable {}
+}
+
+contract QVOwnerPermissionsExtraTest {
+    uint256 constant P = 1 gwei;
+
+    function testOnlyOwnerCanOpenAndCloseVoting() public {
+        QuadraticVoting v = new QuadraticVoting(P, 1000);
+        QVNonOwnerActor attacker = new QVNonOwnerActor();
+
+        try attacker.open{value: 10 * P}(v) {
+            Assert.ok(false, "E1");
+        } catch {
+            Assert.ok(true, "E2");
+        }
+
+        Assert.equal(v.votingOpen(), false, "E3");
+
+        v.openVoting{value: 10 * P}();
+
+        Assert.equal(v.votingOpen(), true, "E4");
+
+        try attacker.close(v) {
+            Assert.ok(false, "E5");
+        } catch {
+            Assert.ok(true, "E6");
+        }
+
+        Assert.equal(v.votingOpen(), true, "E7");
+
+        v.closeVoting();
+
+        Assert.equal(v.votingOpen(), false, "E8");
+    }
+
+    receive() external payable {}
+}
+
+contract QVBuyTokensExtraTest {
+    uint256 constant P = 1 gwei;
+
+    function testBuyTokensAfterJoining() public {
+        QuadraticVoting v = new QuadraticVoting(P, 1000);
+        GovernanceToken t = GovernanceToken(v.getERC20());
+
+        v.openVoting{value: 10 * P}();
+
+        v.addParticipant{value: 2 * P}();
+
+        Assert.equal(v.isParticipant(address(this)), true, "E1");
+        Assert.equal(t.balanceOf(address(this)), 2, "E2");
+
+        v.buyTokens{value: 3 * P}();
+
+        Assert.equal(t.balanceOf(address(this)), 5, "E3");
+    }
+
+    receive() external payable {}
+}
+
+contract QVSellTokensExtraTest {
+    uint256 constant P = 1 gwei;
+
+    function testSellTokensNormally() public {
+        QuadraticVoting v = new QuadraticVoting(P, 1000);
+        GovernanceToken t = GovernanceToken(v.getERC20());
+
+        v.openVoting{value: 10 * P}();
+
+        v.addParticipant{value: 5 * P}();
+
+        Assert.equal(t.balanceOf(address(this)), 5, "E1");
+
+        uint256 balanceBefore = address(this).balance;
+
+        v.sellTokens(2);
+
+        Assert.equal(t.balanceOf(address(this)), 3, "E2");
+        Assert.equal(address(this).balance, balanceBefore + 2 * P, "E3");
+    }
+
+    receive() external payable {}
+}
+
+contract QVClosedGettersExtraTest {
+    uint256 constant P = 1 gwei;
+
+    function testGettersRevertWhenVotingIsClosed() public {
+        QuadraticVoting v = new QuadraticVoting(P, 1000);
+
+        try v.getPendingProposals() returns (uint256[] memory) {
+            Assert.ok(false, "E1");
+        } catch {
+            Assert.ok(true, "E2");
+        }
+
+        try v.getApprovedProposals() returns (uint256[] memory) {
+            Assert.ok(false, "E3");
+        } catch {
+            Assert.ok(true, "E4");
+        }
+
+        try v.getSignalingProposals() returns (uint256[] memory) {
+            Assert.ok(false, "E5");
+        } catch {
+            Assert.ok(true, "E6");
+        }
+
+        try v.getProposalInfo(0) returns (
+            string memory,
+            string memory,
+            uint256,
+            address,
+            QuadraticVoting.ProposalStatus,
+            uint256,
+            uint256,
+            address,
+            bool
+        ) {
+            Assert.ok(false, "E7");
+        } catch {
+            Assert.ok(true, "E8");
+        }
     }
 
     receive() external payable {}

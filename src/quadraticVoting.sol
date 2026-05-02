@@ -10,6 +10,7 @@ contract QuadraticVoting {
 
     event VotingOpened(uint256 initialBudget);
     event VotingClosed(uint256 refundedBudget);
+    event SignalingExecutionFailed(uint256 indexed proposalId);
     event ParticipantAdded(address indexed participant, uint256 tokensBought);
     event ParticipantRemoved(address indexed participant);
     event ProposalCreated(uint256 indexed id, string title, uint256 budget, bool isSignaling);
@@ -29,6 +30,7 @@ contract QuadraticVoting {
     uint256 public numParticipants;
     uint256 public numPendingProposals;
     uint256 private nextProposalId;
+    uint256[] private currentProposalIds;
     bool private locked;
 
     mapping(address => bool) public isParticipant;
@@ -86,10 +88,13 @@ contract QuadraticVoting {
         token = new GovernanceToken("DAO Token", "DVT", _maxTokens);
     }
 
-    receive() external payable {}
+    receive() external payable {
+    revert("Direct Ether not accepted");
+    }
 
     function openVoting() external payable onlyOwner {
         require(!votingOpen, "Voting already open");
+        require(msg.value > 0, "Initial budget required");
         votingOpen = true;
         totalBudget = msg.value;
         emit VotingOpened(msg.value);
@@ -110,7 +115,7 @@ contract QuadraticVoting {
         emit ParticipantAdded(msg.sender, tokensToMint);
     }
 
-    function removeParticipant() external onlyParticipant {
+    function removeParticipant() external onlyParticipant nonReentrant {
         isParticipant[msg.sender] = false;
         numParticipants -= 1;
         emit ParticipantRemoved(msg.sender);
@@ -121,7 +126,7 @@ contract QuadraticVoting {
         string memory _description,
         uint256 _budget,
         address _exec
-    ) external whenVotingOpen onlyParticipant returns (uint256) {
+    ) external whenVotingOpen onlyParticipant nonReentrant returns (uint256) {
         require(bytes(_title).length > 0, "Empty title");
         require(_exec != address(0), "Invalid proposal contract");
         require(_exec.supportsInterface(type(IExecutableProposal).interfaceId), "Contract must implement IExecutableProposal");
@@ -142,6 +147,8 @@ contract QuadraticVoting {
             isSignaling: signaling,
             exists: true
         });
+        
+        currentProposalIds.push(proposalId);
 
         if (!signaling) {
             numPendingProposals += 1;
@@ -204,20 +211,37 @@ contract QuadraticVoting {
 
     function getSignalingProposals() external view whenVotingOpen returns (uint256[] memory) {
         uint256 count = 0;
-        for (uint256 i = 0; i < nextProposalId; i++) {
-            if (proposals[i].exists && proposals[i].isSignaling) {
+
+        for (uint256 j = 0; j < currentProposalIds.length; j++) {
+            uint256 id = currentProposalIds[j];
+            Proposal storage proposal = proposals[id];
+
+            if (
+                proposal.exists &&
+                proposal.isSignaling &&
+                proposal.status == ProposalStatus.Pending
+            ) {
                 count += 1;
             }
         }
 
         uint256[] memory ids = new uint256[](count);
         uint256 idx = 0;
-        for (uint256 i = 0; i < nextProposalId; i++) {
-            if (proposals[i].exists && proposals[i].isSignaling) {
-                ids[idx] = i;
+
+        for (uint256 j = 0; j < currentProposalIds.length; j++) {
+            uint256 id = currentProposalIds[j];
+            Proposal storage proposal = proposals[id];
+
+            if (
+                proposal.exists &&
+                proposal.isSignaling &&
+                proposal.status == ProposalStatus.Pending
+            ) {
+                ids[idx] = id;
                 idx += 1;
             }
         }
+
         return ids;
     }
 
@@ -280,7 +304,6 @@ contract QuadraticVoting {
     function withdrawFromProposal(uint256 proposalId, uint256 votesToRemove)
         external
         whenVotingOpen
-        onlyParticipant
         nonReentrant
     {
         require(votesToRemove > 0, "Votes must be > 0");
@@ -304,14 +327,15 @@ contract QuadraticVoting {
     function closeVoting() external onlyOwner whenVotingOpen nonReentrant {
         votingOpen = false;
 
-        uint256 lastProposalId = nextProposalId;
-        for (uint256 i = 0; i < lastProposalId; i++) {
+        for (uint256 j = 0; j < currentProposalIds.length; j++) {
+            uint256 i = currentProposalIds[j];
             Proposal storage proposal = proposals[i];
             if (!proposal.exists) {
                 continue;
             }
 
-            if (proposal.isSignaling) {
+            if (proposal.isSignaling && proposal.status == ProposalStatus.Pending) {
+
                 (bool success, ) = proposal.executableContract.call{gas: 100000}(
                     abi.encodeWithSelector(
                         IExecutableProposal.executeProposal.selector,
@@ -320,9 +344,14 @@ contract QuadraticVoting {
                         proposal.totalTokensStaked
                     )
                 );
-                require(success, "Signaling execution failed");
+
+                if (!success) {
+                    emit SignalingExecutionFailed(i);
+                }
+
                 _returnTokensToVoters(i);
                 proposal.status = ProposalStatus.Canceled;
+
             } else if (proposal.status == ProposalStatus.Pending) {
                 proposal.status = ProposalStatus.Canceled;
                 numPendingProposals -= 1;
@@ -333,7 +362,7 @@ contract QuadraticVoting {
             delete proposals[i];
         }
 
-        nextProposalId = 0;
+        delete currentProposalIds;
         numPendingProposals = 0;
 
         uint256 remainingBudget = totalBudget;
@@ -419,28 +448,37 @@ contract QuadraticVoting {
         returns (uint256[] memory)
     {
         uint256 count = 0;
-        for (uint256 i = 0; i < nextProposalId; i++) {
-            Proposal storage proposal = proposals[i];
-            if (!proposal.exists) {
-                continue;
-            }
-            if (proposal.status == statusFilter && proposal.isSignaling == onlySignaling) {
+
+        for (uint256 j = 0; j < currentProposalIds.length; j++) {
+            uint256 id = currentProposalIds[j];
+            Proposal storage proposal = proposals[id];
+
+            if (
+                proposal.exists &&
+                proposal.status == statusFilter &&
+                proposal.isSignaling == onlySignaling
+            ) {
                 count += 1;
             }
         }
 
         uint256[] memory ids = new uint256[](count);
         uint256 idx = 0;
-        for (uint256 i = 0; i < nextProposalId; i++) {
-            Proposal storage proposal = proposals[i];
-            if (!proposal.exists) {
-                continue;
-            }
-            if (proposal.status == statusFilter && proposal.isSignaling == onlySignaling) {
-                ids[idx] = i;
+
+        for (uint256 j = 0; j < currentProposalIds.length; j++) {
+            uint256 id = currentProposalIds[j];
+            Proposal storage proposal = proposals[id];
+
+            if (
+                proposal.exists &&
+                proposal.status == statusFilter &&
+                proposal.isSignaling == onlySignaling
+            ) {
+                ids[idx] = id;
                 idx += 1;
             }
         }
+
         return ids;
     }
 

@@ -1,6 +1,6 @@
 {
 	"compiler": {
-		"version": "0.8.31+commit.fd3a2265"
+		"version": "0.8.30+commit.73712a01"
 	},
 	"language": "Solidity",
 	"output": {
@@ -120,6 +120,19 @@
 					}
 				],
 				"name": "ProposalCreated",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "proposalId",
+						"type": "uint256"
+					}
+				],
+				"name": "SignalingExecutionFailed",
 				"type": "event"
 			},
 			{
@@ -720,14 +733,14 @@
 		"compilationTarget": {
 			"src/quadraticVoting.sol": "QuadraticVoting"
 		},
-		"evmVersion": "osaka",
+		"evmVersion": "prague",
 		"libraries": {},
 		"metadata": {
 			"bytecodeHash": "ipfs"
 		},
 		"optimizer": {
-			"enabled": false,
-			"runs": 200
+			"enabled": true,
+			"runs": 1
 		},
 		"remappings": []
 	},
@@ -797,19 +810,19 @@
 			]
 		},
 		"src/governanceToken.sol": {
-			"keccak256": "0x704302b19c2d1e37b6fa514b48241ed4d0dc5b9e3c40a093b3dfe92b95492694",
+			"keccak256": "0x6c318e2eadcf83b8c10af1938d31267a95c4572611941500e73d46984d0e3b0b",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://6f7333161d5c2b89c2cfcddb5ae721000faed8a554f17cf2bdd11f3b3765d958",
-				"dweb:/ipfs/QmbWaVRKWA3LWp7bWwkQvUXeqjpEiecpn4BdxVBFLavT1a"
+				"bzz-raw://ae71e86ec656c7cb1c3fab80786918b79458189c195c486951ec2f6361d4db78",
+				"dweb:/ipfs/QmWQ6Ts4CabPERNv7cdtrhVQ9wAUTGQNRWBf298HRQXfSJ"
 			]
 		},
 		"src/quadraticVoting.sol": {
-			"keccak256": "0x767261cb2d429bbddfeedc07189d9f4fc5b47d7b595c409eaf5bd2aea98d73cb",
+			"keccak256": "0x771932ce2bcd7c6914f33f4540e696c8fa9700bed3c5175cc25964192243980f",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://f84a59a9d06d4683f1e5924d1443dbb092fa5879b5b225380b570f799bec81b5",
-				"dweb:/ipfs/QmfSnoK2UchhFy42aRXDLSnNveSzEbN6QD8s1bGNd39yeY"
+				"bzz-raw://30bb25984b0bcd8d2dc1a3468e04304efb4085bdeeb168bd4c1ca3e770ecaf7d",
+				"dweb:/ipfs/QmSFhwoV5mWWTDunerrHvC6Fyz7bWjQVuDZtnwzPMggdFL"
 			]
 		}
 	},

@@ -1,6 +1,6 @@
 {
 	"compiler": {
-		"version": "0.8.31+commit.fd3a2265"
+		"version": "0.8.30+commit.73712a01"
 	},
 	"language": "Solidity",
 	"output": {
@@ -67,7 +67,7 @@
 		"compilationTarget": {
 			"tests/quadraticVoting_test.sol": "QuadraticVotingTest"
 		},
-		"evmVersion": "osaka",
+		"evmVersion": "prague",
 		"libraries": {},
 		"metadata": {
 			"bytecodeHash": "ipfs"
@@ -160,11 +160,11 @@
 			]
 		},
 		"src/governanceToken.sol": {
-			"keccak256": "0x704302b19c2d1e37b6fa514b48241ed4d0dc5b9e3c40a093b3dfe92b95492694",
+			"keccak256": "0x6c318e2eadcf83b8c10af1938d31267a95c4572611941500e73d46984d0e3b0b",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://6f7333161d5c2b89c2cfcddb5ae721000faed8a554f17cf2bdd11f3b3765d958",
-				"dweb:/ipfs/QmbWaVRKWA3LWp7bWwkQvUXeqjpEiecpn4BdxVBFLavT1a"
+				"bzz-raw://ae71e86ec656c7cb1c3fab80786918b79458189c195c486951ec2f6361d4db78",
+				"dweb:/ipfs/QmWQ6Ts4CabPERNv7cdtrhVQ9wAUTGQNRWBf298HRQXfSJ"
 			]
 		},
 		"src/mocks/mockProposal.sol": {
@@ -176,19 +176,19 @@
 			]
 		},
 		"src/quadraticVoting.sol": {
-			"keccak256": "0x767261cb2d429bbddfeedc07189d9f4fc5b47d7b595c409eaf5bd2aea98d73cb",
+			"keccak256": "0x4f119e40c7c5230067d1dfeac259154ad41c7b01bfd49609041d8d9ca7e52b6d",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://f84a59a9d06d4683f1e5924d1443dbb092fa5879b5b225380b570f799bec81b5",
-				"dweb:/ipfs/QmfSnoK2UchhFy42aRXDLSnNveSzEbN6QD8s1bGNd39yeY"
+				"bzz-raw://bebb21057f1abd6af9437a6ce53d20ec966b36fbc80c5a56784a6071eb982c86",
+				"dweb:/ipfs/QmZfjwCL8WCDb63YdavGbazfqazyM1aFfsrTmZgJdXEkAT"
 			]
 		},
 		"tests/quadraticVoting_test.sol": {
-			"keccak256": "0x81d6832e2a0b9b3d5cb6d2fe0f937e879d770f71f670845be36b034a3f78c440",
+			"keccak256": "0x79bfabc3e2dd6b274408a5b89d43c635051da8f709fc242bc0b370c05466a473",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://260aa2fa78d8cf74fbded3cc880d58e7937635494e5c254fc2d6053fed2f97c8",
-				"dweb:/ipfs/QmXbyXff7rrb6fixRMP7NohV3aUyuECm8c8P5TQNRw4jbY"
+				"bzz-raw://c36a0c9e11cf2db8c15b88d479358d2a8e19daa7c01b1ebb3a5b1168568ea237",
+				"dweb:/ipfs/QmNTywToheuzBp7sczX6gswa485HPnQiwfFgtsTXoTZyqb"
 			]
 		}
 	},
