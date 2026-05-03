@@ -144,10 +144,14 @@ contract SecurityCloseVotingTest {
 
         try voting.closeVoting() {
             Assert.equal(voting.votingOpen(), false, "Voting should close even if signaling execution fails");
-            Assert.equal(token.balanceOf(address(this)), 10, "Tokens from signaling should be refunded");
+            Assert.equal(token.balanceOf(address(this)), 6, "Tokens should remain claimable after close");
         } catch {
             Assert.ok(false, "closeVoting should not be blocked by reverting signaling proposal");
         }
+
+        voting.executeSignalingProposal(id);
+        voting.claimRefundFromProposal(id);
+        Assert.equal(token.balanceOf(address(this)), 10, "Tokens from signaling should be claimed");
     }
 
     receive() external payable {}

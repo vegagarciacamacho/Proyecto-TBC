@@ -8,9 +8,11 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 contract QuadraticVoting {
     using ERC165Checker for address;
 
-    event VotingOpened(uint256 initialBudget);
-    event VotingClosed(uint256 refundedBudget);
+    event VotingOpened(uint256 indexed roundId, uint256 initialBudget);
+    event VotingClosed(uint256 indexed roundId, uint256 refundedBudget);
     event SignalingExecutionFailed(uint256 indexed proposalId);
+    event SignalingExecuted(uint256 indexed proposalId, bool success);
+    event RefundClaimed(uint256 indexed proposalId, address indexed voter, uint256 tokensReturned);
     event ParticipantAdded(address indexed participant, uint256 tokensBought);
     event ParticipantRemoved(address indexed participant);
     event ProposalCreated(uint256 indexed id, string title, uint256 budget, bool isSignaling);
@@ -27,6 +29,7 @@ contract QuadraticVoting {
     uint256 public totalBudget;
     bool public votingOpen;
 
+    uint256 public currentRound;
     uint256 public numParticipants;
     uint256 public numPendingProposals;
     uint256 private nextProposalId;
@@ -34,6 +37,7 @@ contract QuadraticVoting {
     bool private locked;
 
     mapping(address => bool) public isParticipant;
+    mapping(uint256 => bool) public roundClosed;
 
     enum ProposalStatus {
         Pending,
@@ -52,11 +56,11 @@ contract QuadraticVoting {
         address creator;
         bool isSignaling;
         bool exists;
+        uint256 roundId;
     }
 
     mapping(uint256 => Proposal) public proposals;
     mapping(uint256 => mapping(address => uint256)) public userVotesInProposal;
-    mapping(uint256 => address[]) private proposalVoters;
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner");
@@ -89,15 +93,20 @@ contract QuadraticVoting {
     }
 
     receive() external payable {
-    revert("Direct Ether not accepted");
+        revert("Direct Ether not accepted");
     }
 
     function openVoting() external payable onlyOwner {
         require(!votingOpen, "Voting already open");
         require(msg.value > 0, "Initial budget required");
+
+        currentRound += 1;
         votingOpen = true;
         totalBudget = msg.value;
-        emit VotingOpened(msg.value);
+        numPendingProposals = 0;
+        delete currentProposalIds;
+
+        emit VotingOpened(currentRound, msg.value);
     }
 
     function addParticipant() external payable nonReentrant {
@@ -145,9 +154,10 @@ contract QuadraticVoting {
             totalTokensStaked: 0,
             creator: msg.sender,
             isSignaling: signaling,
-            exists: true
+            exists: true,
+            roundId: currentRound
         });
-        
+
         currentProposalIds.push(proposalId);
 
         if (!signaling) {
@@ -160,6 +170,7 @@ contract QuadraticVoting {
 
     function cancelProposal(uint256 proposalId) external whenVotingOpen nonReentrant {
         Proposal storage proposal = _getExistingProposal(proposalId);
+        _requireCurrentRoundProposal(proposal);
         require(msg.sender == proposal.creator, "Only proposal creator");
         require(proposal.status == ProposalStatus.Pending, "Proposal not pending");
 
@@ -167,7 +178,6 @@ contract QuadraticVoting {
         if (!proposal.isSignaling) {
             numPendingProposals -= 1;
         }
-        _returnTokensToVoters(proposalId);
 
         emit ProposalCanceled(proposalId);
     }
@@ -210,39 +220,7 @@ contract QuadraticVoting {
     }
 
     function getSignalingProposals() external view whenVotingOpen returns (uint256[] memory) {
-        uint256 count = 0;
-
-        for (uint256 j = 0; j < currentProposalIds.length; j++) {
-            uint256 id = currentProposalIds[j];
-            Proposal storage proposal = proposals[id];
-
-            if (
-                proposal.exists &&
-                proposal.isSignaling &&
-                proposal.status == ProposalStatus.Pending
-            ) {
-                count += 1;
-            }
-        }
-
-        uint256[] memory ids = new uint256[](count);
-        uint256 idx = 0;
-
-        for (uint256 j = 0; j < currentProposalIds.length; j++) {
-            uint256 id = currentProposalIds[j];
-            Proposal storage proposal = proposals[id];
-
-            if (
-                proposal.exists &&
-                proposal.isSignaling &&
-                proposal.status == ProposalStatus.Pending
-            ) {
-                ids[idx] = id;
-                idx += 1;
-            }
-        }
-
-        return ids;
+        return _getProposalsByFilter(ProposalStatus.Pending, true);
     }
 
     function getProposalInfo(uint256 proposalId)
@@ -278,6 +256,7 @@ contract QuadraticVoting {
     function stake(uint256 proposalId, uint256 votesToAdd) external whenVotingOpen onlyParticipant nonReentrant {
         require(votesToAdd > 0, "Votes must be > 0");
         Proposal storage proposal = _getExistingProposal(proposalId);
+        _requireCurrentRoundProposal(proposal);
         require(proposal.status == ProposalStatus.Pending, "Proposal not pending");
 
         uint256 previousVotes = userVotesInProposal[proposalId][msg.sender];
@@ -285,10 +264,6 @@ contract QuadraticVoting {
         uint256 tokenCost = (updatedVotes * updatedVotes) - (previousVotes * previousVotes);
 
         require(token.transferFrom(msg.sender, address(this), tokenCost), "Token transferFrom failed");
-
-        if (previousVotes == 0) {
-            proposalVoters[proposalId].push(msg.sender);
-        }
 
         userVotesInProposal[proposalId][msg.sender] = updatedVotes;
         proposal.totalVotes += votesToAdd;
@@ -308,6 +283,7 @@ contract QuadraticVoting {
     {
         require(votesToRemove > 0, "Votes must be > 0");
         Proposal storage proposal = _getExistingProposal(proposalId);
+        _requireCurrentRoundProposal(proposal);
         require(proposal.status == ProposalStatus.Pending, "Proposal already finalized");
 
         uint256 previousVotes = userVotesInProposal[proposalId][msg.sender];
@@ -325,43 +301,9 @@ contract QuadraticVoting {
     }
 
     function closeVoting() external onlyOwner whenVotingOpen nonReentrant {
+        uint256 closedRound = currentRound;
         votingOpen = false;
-
-        for (uint256 j = 0; j < currentProposalIds.length; j++) {
-            uint256 i = currentProposalIds[j];
-            Proposal storage proposal = proposals[i];
-            if (!proposal.exists) {
-                continue;
-            }
-
-            if (proposal.isSignaling && proposal.status == ProposalStatus.Pending) {
-
-                (bool success, ) = proposal.executableContract.call{gas: 100000}(
-                    abi.encodeWithSelector(
-                        IExecutableProposal.executeProposal.selector,
-                        i,
-                        proposal.totalVotes,
-                        proposal.totalTokensStaked
-                    )
-                );
-
-                if (!success) {
-                    emit SignalingExecutionFailed(i);
-                }
-
-                _returnTokensToVoters(i);
-                proposal.status = ProposalStatus.Canceled;
-
-            } else if (proposal.status == ProposalStatus.Pending) {
-                proposal.status = ProposalStatus.Canceled;
-                numPendingProposals -= 1;
-                _returnTokensToVoters(i);
-            }
-
-            delete proposalVoters[i];
-            delete proposals[i];
-        }
-
+        roundClosed[closedRound] = true;
         delete currentProposalIds;
         numPendingProposals = 0;
 
@@ -372,7 +314,54 @@ contract QuadraticVoting {
             require(success, "Owner refund failed");
         }
 
-        emit VotingClosed(remainingBudget);
+        emit VotingClosed(closedRound, remainingBudget);
+    }
+
+    function claimRefundFromProposal(uint256 proposalId) external nonReentrant {
+        Proposal storage proposal = _getExistingProposal(proposalId);
+        require(_canClaimRefund(proposal), "Refund not available");
+
+        uint256 votes = userVotesInProposal[proposalId][msg.sender];
+        require(votes > 0, "No tokens to claim");
+
+        uint256 tokensToReturn = votes * votes;
+        userVotesInProposal[proposalId][msg.sender] = 0;
+
+        require(token.transfer(msg.sender, tokensToReturn), "Token return failed");
+        emit RefundClaimed(proposalId, msg.sender, tokensToReturn);
+    }
+
+    function executeSignalingProposal(uint256 proposalId) external nonReentrant {
+        Proposal storage proposal = _getExistingProposal(proposalId);
+        require(proposal.isSignaling, "Not signaling");
+        require(proposal.status == ProposalStatus.Pending, "Proposal not pending");
+        require(roundClosed[proposal.roundId], "Voting round not closed");
+
+        proposal.status = ProposalStatus.Canceled;
+
+        (bool success, ) = proposal.executableContract.call{gas: 100000}(
+            abi.encodeWithSelector(
+                IExecutableProposal.executeProposal.selector,
+                proposalId,
+                proposal.totalVotes,
+                proposal.totalTokensStaked
+            )
+        );
+
+        if (!success) {
+            emit SignalingExecutionFailed(proposalId);
+        }
+        emit SignalingExecuted(proposalId, success);
+    }
+
+    function getClaimableTokens(uint256 proposalId, address voter) external view returns (uint256) {
+        Proposal storage proposal = _getExistingProposal(proposalId);
+        if (!_canClaimRefund(proposal)) {
+            return 0;
+        }
+
+        uint256 votes = userVotesInProposal[proposalId][voter];
+        return votes * votes;
     }
 
     function _checkAndExecuteProposal(uint256 proposalId) internal {
@@ -422,21 +411,6 @@ contract QuadraticVoting {
         return scaledThreshold / 10;
     }
 
-    function _returnTokensToVoters(uint256 proposalId) internal {
-        address[] storage voters = proposalVoters[proposalId];
-        for (uint256 i = 0; i < voters.length; i++) {
-            address voter = voters[i];
-            uint256 votes = userVotesInProposal[proposalId][voter];
-            if (votes == 0) {
-                continue;
-            }
-
-            uint256 tokensToReturn = votes * votes;
-            userVotesInProposal[proposalId][voter] = 0;
-            require(token.transfer(voter, tokensToReturn), "Token return failed");
-        }
-    }
-
     function _getExistingProposal(uint256 proposalId) internal view returns (Proposal storage proposal) {
         proposal = proposals[proposalId];
         require(proposal.exists, "Proposal does not exist");
@@ -456,7 +430,8 @@ contract QuadraticVoting {
             if (
                 proposal.exists &&
                 proposal.status == statusFilter &&
-                proposal.isSignaling == onlySignaling
+                proposal.isSignaling == onlySignaling &&
+                proposal.roundId == currentRound
             ) {
                 count += 1;
             }
@@ -472,7 +447,8 @@ contract QuadraticVoting {
             if (
                 proposal.exists &&
                 proposal.status == statusFilter &&
-                proposal.isSignaling == onlySignaling
+                proposal.isSignaling == onlySignaling &&
+                proposal.roundId == currentRound
             ) {
                 ids[idx] = id;
                 idx += 1;
@@ -480,6 +456,20 @@ contract QuadraticVoting {
         }
 
         return ids;
+    }
+
+    function _canClaimRefund(Proposal storage proposal) internal view returns (bool) {
+        if (proposal.status == ProposalStatus.Approved) {
+            return false;
+        }
+        if (proposal.status == ProposalStatus.Canceled) {
+            return true;
+        }
+        return roundClosed[proposal.roundId];
+    }
+
+    function _requireCurrentRoundProposal(Proposal storage proposal) internal view {
+        require(proposal.roundId == currentRound, "Proposal is not from current round");
     }
 
     function _refundRemainder(address recipient, uint256 remainder) internal {

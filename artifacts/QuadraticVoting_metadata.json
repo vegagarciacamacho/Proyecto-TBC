@@ -130,6 +130,50 @@
 						"internalType": "uint256",
 						"name": "proposalId",
 						"type": "uint256"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "voter",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "tokensReturned",
+						"type": "uint256"
+					}
+				],
+				"name": "RefundClaimed",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "proposalId",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "bool",
+						"name": "success",
+						"type": "bool"
+					}
+				],
+				"name": "SignalingExecuted",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "proposalId",
+						"type": "uint256"
 					}
 				],
 				"name": "SignalingExecutionFailed",
@@ -251,6 +295,12 @@
 				"anonymous": false,
 				"inputs": [
 					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "roundId",
+						"type": "uint256"
+					},
+					{
 						"indexed": false,
 						"internalType": "uint256",
 						"name": "refundedBudget",
@@ -263,6 +313,12 @@
 			{
 				"anonymous": false,
 				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "roundId",
+						"type": "uint256"
+					},
 					{
 						"indexed": false,
 						"internalType": "uint256",
@@ -335,8 +391,47 @@
 				"type": "function"
 			},
 			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "proposalId",
+						"type": "uint256"
+					}
+				],
+				"name": "claimRefundFromProposal",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
 				"inputs": [],
 				"name": "closeVoting",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "currentRound",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "proposalId",
+						"type": "uint256"
+					}
+				],
+				"name": "executeSignalingProposal",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -349,6 +444,30 @@
 						"internalType": "uint256[]",
 						"name": "",
 						"type": "uint256[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "proposalId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "voter",
+						"type": "address"
+					}
+				],
+				"name": "getClaimableTokens",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
 					}
 				],
 				"stateMutability": "view",
@@ -576,6 +695,11 @@
 						"internalType": "bool",
 						"name": "exists",
 						"type": "bool"
+					},
+					{
+						"internalType": "uint256",
+						"name": "roundId",
+						"type": "uint256"
 					}
 				],
 				"stateMutability": "view",
@@ -586,6 +710,25 @@
 				"name": "removeParticipant",
 				"outputs": [],
 				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "roundClosed",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
 				"type": "function"
 			},
 			{
@@ -802,11 +945,11 @@
 			]
 		},
 		"src/IExecutableProposal.sol": {
-			"keccak256": "0x30edf25dd3267f56026e1588b99c205b517503ac56d197644c72c91174c2956d",
+			"keccak256": "0x002ca4d1a93e222fe760efa40c2792b934423a131897bc0c10cf586329edb7d4",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://e40b8cffff13180838fe9ca54ae62c01681bde73b587b4f6df80f34737717a9c",
-				"dweb:/ipfs/QmeBcbAeP2bDx4mGNPjjJCWNSGAkrtLvMwpzsG6rmx4LdC"
+				"bzz-raw://4de3d135505ebed7ddcc23d906de6fd0384293c538df60e3919d162cbe10b7e6",
+				"dweb:/ipfs/QmSJXo5Gb7A5njWb4AHSPDaQbryVdQLDPYWnAEaxuV5vtk"
 			]
 		},
 		"src/governanceToken.sol": {
@@ -818,11 +961,11 @@
 			]
 		},
 		"src/quadraticVoting.sol": {
-			"keccak256": "0x771932ce2bcd7c6914f33f4540e696c8fa9700bed3c5175cc25964192243980f",
+			"keccak256": "0x39a1ca35920cc3d9062dbcd491dc40f572adea090c4953dfce9ff1f9eddeba6b",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://30bb25984b0bcd8d2dc1a3468e04304efb4085bdeeb168bd4c1ca3e770ecaf7d",
-				"dweb:/ipfs/QmSFhwoV5mWWTDunerrHvC6Fyz7bWjQVuDZtnwzPMggdFL"
+				"bzz-raw://534df94ebba5745e811e5ffa971bca4b86da957b19f9293c0f96edf662217e0f",
+				"dweb:/ipfs/QmQMUfZ5vbbKrr3tZR2v44UpzTbpSAe81UT7LXvvzztqnd"
 			]
 		}
 	},

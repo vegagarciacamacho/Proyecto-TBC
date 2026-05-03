@@ -148,8 +148,11 @@ contract QVInsufficientBudgetExtraTest {
         Assert.equal(t.balanceOf(address(this)), 6, "E3");
 
         v.closeVoting();
-        Assert.equal(t.balanceOf(address(this)), 10, "E4");
-        Assert.equal(v.votingOpen(), false, "E5");
+        Assert.equal(t.balanceOf(address(this)), 6, "E4");
+        Assert.equal(v.getClaimableTokens(id, address(this)), 4, "E5");
+        v.claimRefundFromProposal(id);
+        Assert.equal(t.balanceOf(address(this)), 10, "E6");
+        Assert.equal(v.votingOpen(), false, "E7");
     }
 
     receive() external payable {}
@@ -172,13 +175,16 @@ contract QVCancelSignalingExtraTest {
         Assert.equal(t.balanceOf(address(this)), 6, "E1");
 
         v.cancelProposal(id);
-        Assert.equal(t.balanceOf(address(this)), 10, "E2");
+        Assert.equal(t.balanceOf(address(this)), 6, "E2");
+        Assert.equal(v.getClaimableTokens(id, address(this)), 4, "E3");
+        v.claimRefundFromProposal(id);
+        Assert.equal(t.balanceOf(address(this)), 10, "E4");
 
         uint256[] memory sig = v.getSignalingProposals();
-        Assert.equal(sig.length, 0, "E3");
+        Assert.equal(sig.length, 0, "E5");
 
         v.closeVoting();
-        Assert.equal(p.executions(), 0, "E4");
+        Assert.equal(p.executions(), 0, "E6");
     }
 
     receive() external payable {}
@@ -201,13 +207,47 @@ contract QVSignalingCloseExtraTest {
         Assert.equal(t.balanceOf(address(this)), 7, "E1");
 
         v.closeVoting();
-        Assert.equal(t.balanceOf(address(this)), 16, "E2");
-        Assert.equal(p.executions(), 1, "E3");
+        Assert.equal(t.balanceOf(address(this)), 7, "E2");
+        Assert.equal(p.executions(), 0, "E3");
         Assert.equal(v.totalBudget(), 0, "E4");
+
+        v.executeSignalingProposal(id1);
+        Assert.equal(p.executions(), 1, "E5");
+        Assert.equal(v.getClaimableTokens(id1, address(this)), 9, "E6");
+        v.claimRefundFromProposal(id1);
+        Assert.equal(t.balanceOf(address(this)), 16, "E7");
 
         v.openVoting{value: 5 * P}();
         uint256 id2 = v.addProposal("N", "D", 0, address(p));
-        Assert.ok(id2 != id1, "E5");
+        Assert.ok(id2 != id1, "E8");
+    }
+
+    receive() external payable {}
+}
+
+contract QVPullOverPushAfterReopenExtraTest {
+    uint256 constant P = 1 gwei;
+
+    function testOldRefundAndSignalingCanBePulledAfterNewRoundOpens() public {
+        QuadraticVoting v = new QuadraticVoting(P, 1000);
+        GovernanceToken t = GovernanceToken(v.getERC20());
+        TestProposal p = new TestProposal();
+
+        v.openVoting{value: 20 * P}();
+        v.addParticipant{value: 10 * P}();
+        uint256 oldId = v.addProposal("S", "D", 0, address(p));
+        t.approve(address(v), 4);
+        v.stake(oldId, 2);
+        Assert.equal(t.balanceOf(address(this)), 6, "E1");
+
+        v.closeVoting();
+        v.openVoting{value: 20 * P}();
+
+        v.executeSignalingProposal(oldId);
+        Assert.equal(p.executions(), 1, "E2");
+        v.claimRefundFromProposal(oldId);
+        Assert.equal(t.balanceOf(address(this)), 10, "E3");
+        Assert.equal(v.votingOpen(), true, "E4");
     }
 
     receive() external payable {}
