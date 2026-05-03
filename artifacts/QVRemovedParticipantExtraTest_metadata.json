@@ -187,6 +187,14 @@
 				"dweb:/ipfs/QmWQ6Ts4CabPERNv7cdtrhVQ9wAUTGQNRWBf298HRQXfSJ"
 			]
 		},
+		"src/mocks/mockProposal.sol": {
+			"keccak256": "0x05f8b39a1e745d21d9c4f8d88593be370f8f15ca1e6c650353a72b341895dea7",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://da2d493c1583fc8ce8c5de0d91b083396ffcd79a3425fb4a51a6aac9e56f41b7",
+				"dweb:/ipfs/QmcS7THdd9LjGgJkwrqf1oLfjWRwHZTrghhuvszfke8trB"
+			]
+		},
 		"src/quadraticVoting.sol": {
 			"keccak256": "0x39a1ca35920cc3d9062dbcd491dc40f572adea090c4953dfce9ff1f9eddeba6b",
 			"license": "MIT",
@@ -196,11 +204,11 @@
 			]
 		},
 		"tests/quadraticVoting_test.sol": {
-			"keccak256": "0x5ea83338437042554e7e41fb56dac20f10613b7209b28c89daeed0f37e760a4b",
+			"keccak256": "0xe09b6b2222b0ad988d9bf1df92c76c4cc83c9529c978dbc5ae67614a44944590",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://838cbd09aee586811ad62dc5a03f0caa9e0b07014351e250fce59cff748206b2",
-				"dweb:/ipfs/QmT33phaZakUqXRSm89D67P4psk2VJfaRNq4wx1CwbEnDk"
+				"bzz-raw://77d022438b13da4e736e39100b3a385e661a07d43816e912ab8c4ca2f3f2a46c",
+				"dweb:/ipfs/QmX2bKLidCMXJ4koVkmBTMU8kVNZt3n2F71odnk1N9xcP2"
 			]
 		}
 	},

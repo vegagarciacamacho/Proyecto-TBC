@@ -1,6 +1,6 @@
 {
 	"compiler": {
-		"version": "0.8.31+commit.fd3a2265"
+		"version": "0.8.30+commit.73712a01"
 	},
 	"language": "Solidity",
 	"output": {
@@ -104,14 +104,14 @@
 		"compilationTarget": {
 			"src/mocks/mockProposal.sol": "MockProposal"
 		},
-		"evmVersion": "osaka",
+		"evmVersion": "prague",
 		"libraries": {},
 		"metadata": {
 			"bytecodeHash": "ipfs"
 		},
 		"optimizer": {
-			"enabled": false,
-			"runs": 200
+			"enabled": true,
+			"runs": 1
 		},
 		"remappings": []
 	},
@@ -133,11 +133,11 @@
 			]
 		},
 		"src/IExecutableProposal.sol": {
-			"keccak256": "0x30edf25dd3267f56026e1588b99c205b517503ac56d197644c72c91174c2956d",
+			"keccak256": "0x002ca4d1a93e222fe760efa40c2792b934423a131897bc0c10cf586329edb7d4",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://e40b8cffff13180838fe9ca54ae62c01681bde73b587b4f6df80f34737717a9c",
-				"dweb:/ipfs/QmeBcbAeP2bDx4mGNPjjJCWNSGAkrtLvMwpzsG6rmx4LdC"
+				"bzz-raw://4de3d135505ebed7ddcc23d906de6fd0384293c538df60e3919d162cbe10b7e6",
+				"dweb:/ipfs/QmSJXo5Gb7A5njWb4AHSPDaQbryVdQLDPYWnAEaxuV5vtk"
 			]
 		},
 		"src/mocks/mockProposal.sol": {

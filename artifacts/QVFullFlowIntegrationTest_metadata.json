@@ -7,7 +7,7 @@
 		"abi": [
 			{
 				"inputs": [],
-				"name": "testOnlyOwnerCanOpenAndCloseVoting",
+				"name": "testFullVotingFlowWithPullOverPush",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -30,7 +30,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"tests/quadraticVoting_test.sol": "QVOwnerPermissionsExtraTest"
+			"tests/quadraticVoting_test.sol": "QVFullFlowIntegrationTest"
 		},
 		"evmVersion": "prague",
 		"libraries": {},

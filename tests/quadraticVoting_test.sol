@@ -9,6 +9,7 @@ import "remix_tests.sol";
 import "../src/quadraticVoting.sol";
 import "../src/governanceToken.sol";
 import "../src/IExecutableProposal.sol";
+import "../src/mocks/mockProposal.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 
@@ -477,4 +478,47 @@ contract QVClosedGettersExtraTest {
     }
 
     receive() external payable {}
+}
+
+contract QVFullFlowIntegrationTest {
+    uint256 constant P = 1 gwei;
+
+    function testFullVotingFlowWithPullOverPush() public {
+        QuadraticVoting v = new QuadraticVoting(P, 1000);
+        GovernanceToken t = GovernanceToken(v.getERC20());
+
+        MockProposal funded = new MockProposal();
+        MockProposal signaling = new MockProposal();
+
+        v.openVoting{value: 50 * P}();
+
+        v.addParticipant{value: 20 * P}();
+
+        uint256 fundingId = v.addProposal("F", "D", 5 * P, address(funded));
+        uint256 signalingId = v.addProposal("S", "D", 0, address(signaling));
+
+        t.approve(address(v), 20);
+
+        v.stake(fundingId, 3);
+        v.stake(signalingId, 2);
+
+        uint256[] memory approved = v.getApprovedProposals();
+        Assert.equal(approved.length, 1, "E1");
+
+        v.closeVoting();
+
+        Assert.equal(v.votingOpen(), false, "E2");
+
+        v.executeSignalingProposal(signalingId);
+        v.claimRefundFromProposal(signalingId);
+
+        Assert.ok(t.balanceOf(address(this)) > 0, "E3");
+
+        v.openVoting{value: 10 * P}();
+
+        Assert.equal(v.votingOpen(), true, "E4");
+    }
+
+    receive() external payable {}
+
 }
