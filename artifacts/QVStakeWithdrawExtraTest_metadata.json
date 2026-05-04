@@ -7,6 +7,13 @@
 		"abi": [
 			{
 				"inputs": [],
+				"name": "beforeAll",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
 				"name": "testStakeAndWithdrawQuadraticCost",
 				"outputs": [],
 				"stateMutability": "nonpayable",
@@ -132,14 +139,6 @@
 				"dweb:/ipfs/QmWQ6Ts4CabPERNv7cdtrhVQ9wAUTGQNRWBf298HRQXfSJ"
 			]
 		},
-		"src/mocks/mockProposal.sol": {
-			"keccak256": "0x05f8b39a1e745d21d9c4f8d88593be370f8f15ca1e6c650353a72b341895dea7",
-			"license": "MIT",
-			"urls": [
-				"bzz-raw://da2d493c1583fc8ce8c5de0d91b083396ffcd79a3425fb4a51a6aac9e56f41b7",
-				"dweb:/ipfs/QmcS7THdd9LjGgJkwrqf1oLfjWRwHZTrghhuvszfke8trB"
-			]
-		},
 		"src/quadraticVoting.sol": {
 			"keccak256": "0x39a1ca35920cc3d9062dbcd491dc40f572adea090c4953dfce9ff1f9eddeba6b",
 			"license": "MIT",
@@ -149,11 +148,11 @@
 			]
 		},
 		"tests/quadraticVoting_test.sol": {
-			"keccak256": "0xe09b6b2222b0ad988d9bf1df92c76c4cc83c9529c978dbc5ae67614a44944590",
+			"keccak256": "0x7995b839d0467279692bf423249dfbe90d2ccb1022397ca643a6f195ec399b05",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://77d022438b13da4e736e39100b3a385e661a07d43816e912ab8c4ca2f3f2a46c",
-				"dweb:/ipfs/QmX2bKLidCMXJ4koVkmBTMU8kVNZt3n2F71odnk1N9xcP2"
+				"bzz-raw://4e38d2c46116fd8cc98a055a63cfa7614dbb383e58bfcc144b89b4ca73488f9f",
+				"dweb:/ipfs/QmNkkMcTZbWXbtS2RkWQcYfs7HakFfMRAd1ZS5eveHiSKP"
 			]
 		}
 	},

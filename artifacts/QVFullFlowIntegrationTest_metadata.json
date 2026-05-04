@@ -9,7 +9,7 @@
 				"inputs": [],
 				"name": "testFullVotingFlowWithPullOverPush",
 				"outputs": [],
-				"stateMutability": "nonpayable",
+				"stateMutability": "payable",
 				"type": "function"
 			},
 			{
@@ -24,13 +24,17 @@
 		},
 		"userdoc": {
 			"kind": "user",
-			"methods": {},
+			"methods": {
+				"testFullVotingFlowWithPullOverPush()": {
+					"notice": "#value: 1000000000000"
+				}
+			},
 			"version": 1
 		}
 	},
 	"settings": {
 		"compilationTarget": {
-			"tests/quadraticVoting_test.sol": "QVFullFlowIntegrationTest"
+			"tests/full_quadraticVoting_test.sol": "QVFullFlowIntegrationTest"
 		},
 		"evmVersion": "prague",
 		"libraries": {},
@@ -148,12 +152,12 @@
 				"dweb:/ipfs/QmQMUfZ5vbbKrr3tZR2v44UpzTbpSAe81UT7LXvvzztqnd"
 			]
 		},
-		"tests/quadraticVoting_test.sol": {
-			"keccak256": "0xe09b6b2222b0ad988d9bf1df92c76c4cc83c9529c978dbc5ae67614a44944590",
+		"tests/full_quadraticVoting_test.sol": {
+			"keccak256": "0xa2a84532e0db4abdced891cbdc1b5014b510c6279caeaf2a7af630d9079c7ddc",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://77d022438b13da4e736e39100b3a385e661a07d43816e912ab8c4ca2f3f2a46c",
-				"dweb:/ipfs/QmX2bKLidCMXJ4koVkmBTMU8kVNZt3n2F71odnk1N9xcP2"
+				"bzz-raw://f80d815c63d7983fb6ae44e2132fac6ca47ea69ab0d52b374b2b4e75f3a45003",
+				"dweb:/ipfs/QmY1ii8E8meGBamyChoyfj2UNNmFrjfSM5dKQQNx8CYnMy"
 			]
 		}
 	},

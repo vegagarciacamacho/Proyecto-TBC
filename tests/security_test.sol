@@ -1,81 +1,56 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+// IMPORTANTE PARA REMIX:
+// Compilar con optimizer activado, runs = 1.
+// Subir Gas Limit en Deploy & Run Transactions a 30000000.
+
 import "remix_tests.sol";
 import "../src/quadraticVoting.sol";
-import "../src/IExecutableProposal.sol";
-import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import "../src/governanceToken.sol";
+import "../src/mocks/securityMocks.sol";
 
-contract GasConsumerProposal is IExecutableProposal, ERC165 {
-    function supportsInterface(bytes4 interfaceId) public view override(ERC165, IERC165) returns (bool) {
-        return interfaceId == type(IExecutableProposal).interfaceId || super.supportsInterface(interfaceId);
-    }
+contract SecurityERC165Test {
+    uint256 constant P = 1 gwei;
 
-    function executeProposal(uint256, uint256, uint256) external payable override {
-        while (true) {}
-    }
-}
+    /// #value: 1000000000000
+    function testNonERC165ContractCannotBeProposal() public payable {
+        QuadraticVoting voting = new QuadraticVoting(P, 1000);
+        NonERC165Proposal invalidProposal = new NonERC165Proposal();
 
-contract NonERC165Proposal {
-    function executeProposal(uint256, uint256, uint256) external payable {}
-}
+        voting.openVoting{value: 10 * P}();
+        voting.addParticipant{value: 5 * P}();
 
-contract RevertingSignalingProposal is IExecutableProposal, ERC165 {
-    function supportsInterface(bytes4 interfaceId) public view override(ERC165, IERC165) returns (bool) {
-        return interfaceId == type(IExecutableProposal).interfaceId || super.supportsInterface(interfaceId);
-    }
-
-    function executeProposal(uint256, uint256, uint256) external payable override {
-        revert("Malicious signaling revert");
-    }
-}
-
-contract ReentrantSeller {
-    QuadraticVoting public voting;
-    GovernanceToken public token;
-    bool public reentered;
-
-    constructor(QuadraticVoting _voting) {
-        voting = _voting;
-        token = GovernanceToken(_voting.getERC20());
-    }
-
-    receive() external payable {
-        if (!reentered) {
-            reentered = true;
-            try voting.sellTokens(1) {
-            } catch {
-            }
+        try voting.addProposal("Invalid", "Does not support ERC165", 0, address(invalidProposal)) returns (uint256) {
+            Assert.ok(false, "E1");
+        } catch {
+            Assert.ok(true, "E2");
         }
     }
 
-    function joinAndBuy() external payable {
-        voting.addParticipant{value: msg.value}();
-    }
-
-    function attemptSell(uint256 amount) external {
-        voting.sellTokens(amount);
-    }
+    receive() external payable {}
 }
 
 contract SecurityGasLimitTest {
-    uint256 constant TOKEN_PRICE = 1 gwei;
+    uint256 constant P = 1 gwei;
 
-    function testGasLimitProtectsMainContract() public {
-        QuadraticVoting voting = new QuadraticVoting(TOKEN_PRICE, 1000);
+    /// #value: 1000000000000
+    function testGasLimitProtectsMainContract() public payable {
+        QuadraticVoting voting = new QuadraticVoting(P, 1000);
         GovernanceToken token = GovernanceToken(voting.getERC20());
-        GasConsumerProposal malicious = new GasConsumerProposal();
+        GasHeavyProposal malicious = new GasHeavyProposal();
 
-        voting.openVoting{value: 10 * TOKEN_PRICE}();
-        voting.addParticipant{value: 30 * TOKEN_PRICE}();
+        voting.openVoting{value: 10 * P}();
+        voting.addParticipant{value: 30 * P}();
 
-        uint256 id = voting.addProposal("Gas", "DoS attempt", 1 * TOKEN_PRICE, address(malicious));
-        token.approve(address(voting), 25);
+        uint256 id = voting.addProposal("Gas", "DoS attempt", 1 * P, address(malicious));
 
-        try voting.stake(id, 5) {
-            Assert.ok(false, "Stake should revert because proposal execution exhausts 100k gas budget");
+        token.approve(address(voting), 4);
+
+        try voting.stake(id, 2) {
+            Assert.ok(false, "E1");
         } catch {
-            Assert.ok(voting.votingOpen(), "Voting contract should remain alive after failed external execution");
+            Assert.equal(voting.votingOpen(), true, "E2");
         }
     }
 
@@ -83,75 +58,75 @@ contract SecurityGasLimitTest {
 }
 
 contract SecurityReentrancyTest {
-    uint256 constant TOKEN_PRICE = 1 gwei;
+    uint256 constant P = 1 gwei;
 
-    function testReentrancyOnSellTokensIsBlocked() public {
-        QuadraticVoting voting = new QuadraticVoting(TOKEN_PRICE, 1000);
-        ReentrantSeller attacker = new ReentrantSeller(voting);
+    /// #value: 1000000000000
+    function testReentrancyOnSellTokensIsBlocked() public payable {
+        QuadraticVoting voting = new QuadraticVoting(P, 1000);
         GovernanceToken token = GovernanceToken(voting.getERC20());
+        ReentrantSeller attacker = new ReentrantSeller(voting);
 
-        voting.openVoting{value: 20 * TOKEN_PRICE}();
-        (bool sent, ) = payable(address(attacker)).call{value: 5 * TOKEN_PRICE}("");
-        require(sent, "Funding attacker failed");
-        attacker.joinAndBuy{value: 5 * TOKEN_PRICE}();
-        Assert.equal(token.balanceOf(address(attacker)), 5, "Attacker should own 5 tokens");
+        voting.openVoting{value: 20 * P}();
+
+        attacker.joinAndBuy{value: 5 * P}();
+
+        Assert.equal(token.balanceOf(address(attacker)), 5, "E1");
 
         attacker.attemptSell(1);
-        Assert.equal(token.balanceOf(address(attacker)), 4, "Only one token should be sold");
-        Assert.ok(attacker.reentered(), "Attacker fallback should have attempted reentrancy");
+
+        Assert.equal(token.balanceOf(address(attacker)), 4, "E2");
+        Assert.equal(attacker.reentered(), true, "E3");
     }
 
     receive() external payable {}
 }
 
-contract SecurityERC165Test {
-    uint256 constant TOKEN_PRICE = 1 gwei;
+contract SecuritySignalingFailureTest {
+    uint256 constant P = 1 gwei;
 
-    function testNonERC165ContractCannotBeProposal() public {
-        QuadraticVoting voting = new QuadraticVoting(TOKEN_PRICE, 1000);
-        NonERC165Proposal invalidProposal = new NonERC165Proposal();
-
-        voting.openVoting{value: 10 * TOKEN_PRICE}();
-        voting.addParticipant{value: 5 * TOKEN_PRICE}();
-
-        try voting.addProposal("Invalid", "Does not support ERC165", 0, address(invalidProposal)) returns (uint256) {
-            Assert.ok(false, "Contract without ERC165/IExecutableProposal should be rejected");
-        } catch {
-            Assert.ok(true, "Invalid proposal contract rejected");
-        }
-    }
-
-    receive() external payable {}
-}
-
-contract SecurityCloseVotingTest {
-    uint256 constant TOKEN_PRICE = 1 gwei;
-
-    function testCloseVotingIsNotBlockedByRevertingSignalingProposal() public {
-        QuadraticVoting voting = new QuadraticVoting(TOKEN_PRICE, 1000);
+    /// #value: 1000000000000
+    function testRevertingSignalingDoesNotBlockCloseOrClaim() public payable {
+        QuadraticVoting voting = new QuadraticVoting(P, 1000);
         GovernanceToken token = GovernanceToken(voting.getERC20());
         RevertingSignalingProposal malicious = new RevertingSignalingProposal();
 
-        voting.openVoting{value: 10 * TOKEN_PRICE}();
-        voting.addParticipant{value: 10 * TOKEN_PRICE}();
+        voting.openVoting{value: 10 * P}();
+        voting.addParticipant{value: 10 * P}();
 
         uint256 id = voting.addProposal("Bad signal", "Reverts on execution", 0, address(malicious));
 
         token.approve(address(voting), 4);
         voting.stake(id, 2);
 
-        Assert.equal(token.balanceOf(address(this)), 6, "Test contract should have 6 tokens before close");
+        Assert.equal(token.balanceOf(address(this)), 6, "E1");
 
-        try voting.closeVoting() {
-            Assert.equal(voting.votingOpen(), false, "Voting should close even if signaling execution fails");
-            Assert.equal(token.balanceOf(address(this)), 6, "Tokens should remain claimable after close");
-        } catch {
-            Assert.ok(false, "closeVoting should not be blocked by reverting signaling proposal");
-        }
+        voting.closeVoting();
+
+        Assert.equal(voting.votingOpen(), false, "E2");
+        Assert.equal(token.balanceOf(address(this)), 6, "E3");
+        Assert.equal(voting.getClaimableTokens(id, address(this)), 4, "E4");
 
         voting.executeSignalingProposal(id);
         voting.claimRefundFromProposal(id);
-        Assert.equal(token.balanceOf(address(this)), 10, "Tokens from signaling should be claimed");
+
+        Assert.equal(token.balanceOf(address(this)), 10, "E5");
+        Assert.equal(voting.getClaimableTokens(id, address(this)), 0, "E6");
+    }
+
+    receive() external payable {}
+}
+
+contract SecurityDirectEtherTest {
+    uint256 constant P = 1 gwei;
+
+    /// #value: 1000000000000
+    function testDirectEtherIsRejected() public payable {
+        QuadraticVoting voting = new QuadraticVoting(P, 1000);
+
+        (bool success, ) = address(voting).call{value: P}("");
+
+        Assert.equal(success, false, "E1");
+        Assert.equal(address(voting).balance, 0, "E2");
     }
 
     receive() external payable {}

@@ -9,7 +9,7 @@
 				"inputs": [],
 				"name": "testGasLimitProtectsMainContract",
 				"outputs": [],
-				"stateMutability": "nonpayable",
+				"stateMutability": "payable",
 				"type": "function"
 			},
 			{
@@ -24,7 +24,11 @@
 		},
 		"userdoc": {
 			"kind": "user",
-			"methods": {},
+			"methods": {
+				"testGasLimitProtectsMainContract()": {
+					"notice": "#value: 1000000000000"
+				}
+			},
 			"version": 1
 		}
 	},
@@ -132,6 +136,14 @@
 				"dweb:/ipfs/QmWQ6Ts4CabPERNv7cdtrhVQ9wAUTGQNRWBf298HRQXfSJ"
 			]
 		},
+		"src/mocks/securityMocks.sol": {
+			"keccak256": "0x88e5a597852c1805c473f189dcf411ab033d3c8ca13660de153187507e2cd82f",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://dc972bfa0f7d73197e50062ba0ded1626f6dc44bb54d0b262866711e0aeb7d68",
+				"dweb:/ipfs/QmSzm8sHFn8tMQDcqveAS9HrHG8jMkaFQir98nBuxAyGRv"
+			]
+		},
 		"src/quadraticVoting.sol": {
 			"keccak256": "0x39a1ca35920cc3d9062dbcd491dc40f572adea090c4953dfce9ff1f9eddeba6b",
 			"license": "MIT",
@@ -141,11 +153,11 @@
 			]
 		},
 		"tests/security_test.sol": {
-			"keccak256": "0x665c8b2ca59942f3569d55326c56cb0560d223cacb3965ddd3b7f69dae41cb75",
+			"keccak256": "0xfb57171cecd83a5790d69be4805e54a2a8c403ee32b20bbc31a356b4b27ded1c",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://1497beeefe357d6270c027d3b48f60387f45bf2f9d64cef1987423fd3dfcf287",
-				"dweb:/ipfs/QmTdaFUSNpnfTwdY24jJVSYj75bcX2UDwFT6zce3VQbAMq"
+				"bzz-raw://166442589601d816a75435d33a0f31a1228020594f1022dacfbf47f2fc538488",
+				"dweb:/ipfs/QmTrL2Ec9zpMk25CFy9t7QCVVM3Hsuz2mRzwmguctrJMPj"
 			]
 		}
 	},
