@@ -90,22 +90,8 @@
 			}
 		],
 		"devdoc": {
-			"details": "Contrato auxiliar usado en pruebas. Simula un contrato externo de propuesta compatible con el sistema QuadraticVoting. Su objetivo es comprobar que el contrato principal: - detecta correctamente la interfaz IExecutableProposal mediante ERC165; - llama a executeProposal cuando una propuesta se ejecuta; - transfiere correctamente Ether en propuestas de financiación.",
-			"events": {
-				"ProposalExecuted(uint256,uint256,uint256,uint256,uint256)": {
-					"details": "Evento emitido cada vez que QuadraticVoting ejecuta esta propuesta. fundsReceived permite comprobar cuánto Ether se ha enviado en la llamada. currentBalance permite verificar el saldo acumulado del contrato tras recibir fondos."
-				}
-			},
 			"kind": "dev",
-			"methods": {
-				"executeProposal(uint256,uint256,uint256)": {
-					"details": "Función llamada por QuadraticVoting al ejecutar una propuesta. No contiene lógica real de negocio: solo emite un evento con los datos recibidos para facilitar las pruebas y verificar la transferencia de Ether."
-				},
-				"supportsInterface(bytes4)": {
-					"details": "Declara compatibilidad con IExecutableProposal usando ERC165. QuadraticVoting usa esta función antes de aceptar una propuesta, evitando añadir contratos que no implementen la interfaz requerida."
-				}
-			},
-			"title": "MockProposal",
+			"methods": {},
 			"version": 1
 		},
 		"userdoc": {
@@ -147,19 +133,19 @@
 			]
 		},
 		"src/IExecutableProposal.sol": {
-			"keccak256": "0x002ca4d1a93e222fe760efa40c2792b934423a131897bc0c10cf586329edb7d4",
+			"keccak256": "0xe1eedb33e724eec0dbebc30ee924e19a70e7b587ea158d0cf9c6657f018581ec",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://4de3d135505ebed7ddcc23d906de6fd0384293c538df60e3919d162cbe10b7e6",
-				"dweb:/ipfs/QmSJXo5Gb7A5njWb4AHSPDaQbryVdQLDPYWnAEaxuV5vtk"
+				"bzz-raw://51191149dc25f0649647d64aea1ac92b5f65ebaa2ec11a12cb0b32c403378646",
+				"dweb:/ipfs/QmQNv3CrSFLzTwgvHzpf78xVmUMKBLRU4eruUNrpJuLMhC"
 			]
 		},
 		"src/mocks/mockProposal.sol": {
-			"keccak256": "0xedeefdcee705cadfc6991b471f207811502636dea43f7fdf5fe56bd06483794e",
+			"keccak256": "0x0d33c4d7aeb63bca05ea99afc433c36d96e5df9b7821cb39477b8e374e073222",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://b04e0ec291cc15e5745ad5fcdfe8a44869d659d10dbd8c4961f211c4ae21cc0d",
-				"dweb:/ipfs/QmRjDy2PBMohiE6pFkvS1WzBRMAaHzj1b8TuuqYVSKGreN"
+				"bzz-raw://52e931339425100e2196e64df5d7be0016363786764af98696e89e82d89a25a4",
+				"dweb:/ipfs/QmP7VidsDrFLZqVNE2UF8H7eWn61expYdRe7JKDdZ9RmND"
 			]
 		}
 	},
