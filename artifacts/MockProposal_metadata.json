@@ -90,8 +90,22 @@
 			}
 		],
 		"devdoc": {
+			"details": "Contrato auxiliar usado en pruebas. Simula un contrato externo de propuesta compatible con el sistema QuadraticVoting. Su objetivo es comprobar que el contrato principal: - detecta correctamente la interfaz IExecutableProposal mediante ERC165; - llama a executeProposal cuando una propuesta se ejecuta; - transfiere correctamente Ether en propuestas de financiación.",
+			"events": {
+				"ProposalExecuted(uint256,uint256,uint256,uint256,uint256)": {
+					"details": "Evento emitido cada vez que QuadraticVoting ejecuta esta propuesta. fundsReceived permite comprobar cuánto Ether se ha enviado en la llamada. currentBalance permite verificar el saldo acumulado del contrato tras recibir fondos."
+				}
+			},
 			"kind": "dev",
-			"methods": {},
+			"methods": {
+				"executeProposal(uint256,uint256,uint256)": {
+					"details": "Función llamada por QuadraticVoting al ejecutar una propuesta. No contiene lógica real de negocio: solo emite un evento con los datos recibidos para facilitar las pruebas y verificar la transferencia de Ether."
+				},
+				"supportsInterface(bytes4)": {
+					"details": "Declara compatibilidad con IExecutableProposal usando ERC165. QuadraticVoting usa esta función antes de aceptar una propuesta, evitando añadir contratos que no implementen la interfaz requerida."
+				}
+			},
+			"title": "MockProposal",
 			"version": 1
 		},
 		"userdoc": {
@@ -141,11 +155,11 @@
 			]
 		},
 		"src/mocks/mockProposal.sol": {
-			"keccak256": "0x05f8b39a1e745d21d9c4f8d88593be370f8f15ca1e6c650353a72b341895dea7",
+			"keccak256": "0xedeefdcee705cadfc6991b471f207811502636dea43f7fdf5fe56bd06483794e",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://da2d493c1583fc8ce8c5de0d91b083396ffcd79a3425fb4a51a6aac9e56f41b7",
-				"dweb:/ipfs/QmcS7THdd9LjGgJkwrqf1oLfjWRwHZTrghhuvszfke8trB"
+				"bzz-raw://b04e0ec291cc15e5745ad5fcdfe8a44869d659d10dbd8c4961f211c4ae21cc0d",
+				"dweb:/ipfs/QmRjDy2PBMohiE6pFkvS1WzBRMAaHzj1b8TuuqYVSKGreN"
 			]
 		}
 	},

@@ -5,9 +5,11 @@ import "./governanceToken.sol";
 import "./IExecutableProposal.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
+// Contrato principal que gestiona participantes, propuestas, votos y presupuesto.
 contract QuadraticVoting {
     using ERC165Checker for address;
 
+    // Eventos para trazabilidad de las acciones principales.
     event VotingOpened(uint256 indexed roundId, uint256 initialBudget);
     event VotingClosed(uint256 indexed roundId, uint256 refundedBudget);
     event SignalingExecutionFailed(uint256 indexed proposalId);
@@ -23,12 +25,14 @@ contract QuadraticVoting {
     event TokensPurchased(address indexed buyer, uint256 amount, uint256 costWei);
     event TokensSold(address indexed seller, uint256 amount, uint256 refundWei);
 
+    // Datos básicos del sistema de votación.
     address public immutable owner;
     GovernanceToken public immutable token;
     uint256 public immutable tokenPriceWei;
     uint256 public totalBudget;
     bool public votingOpen;
 
+    // Variables de control de rondas, propuestas y seguridad.
     uint256 public currentRound;
     uint256 public numParticipants;
     uint256 public numPendingProposals;
@@ -36,15 +40,18 @@ contract QuadraticVoting {
     uint256[] private currentProposalIds;
     bool private locked;
 
+    // Registro de participantes y rondas cerradas.
     mapping(address => bool) public isParticipant;
     mapping(uint256 => bool) public roundClosed;
 
+    // Estados posibles de una propuesta.
     enum ProposalStatus {
         Pending,
         Approved,
         Canceled
     }
 
+    // Información almacenada para cada propuesta.
     struct Proposal {
         string title;
         string description;
@@ -59,24 +66,29 @@ contract QuadraticVoting {
         uint256 roundId;
     }
 
+    // Almacén de propuestas y votos por usuario.
     mapping(uint256 => Proposal) public proposals;
     mapping(uint256 => mapping(address => uint256)) public userVotesInProposal;
 
+    // Restringe funciones al propietario del contrato.
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner");
         _;
     }
 
+    // Restringe funciones a participantes registrados.
     modifier onlyParticipant() {
         require(isParticipant[msg.sender], "Only participant");
         _;
     }
 
+    // Exige que haya una votación abierta.
     modifier whenVotingOpen() {
         require(votingOpen, "Voting is closed");
         _;
     }
 
+    // Evita reentradas en funciones sensibles.
     modifier nonReentrant() {
         require(!locked, "Reentrancy blocked");
         locked = true;
@@ -84,6 +96,7 @@ contract QuadraticVoting {
         locked = false;
     }
 
+    // Inicializa el precio del token, el máximo de tokens y crea el ERC20.
     constructor(uint256 _tokenPriceWei, uint256 _maxTokens) {
         require(_tokenPriceWei > 0, "Token price must be > 0");
         require(_maxTokens > 0, "Max tokens must be > 0");
@@ -92,10 +105,12 @@ contract QuadraticVoting {
         token = new GovernanceToken("DAO Token", "DVT", _maxTokens);
     }
 
+    // Evita recibir Ether fuera de funciones controladas.
     receive() external payable {
         revert("Direct Ether not accepted");
     }
 
+    // Abre una nueva ronda de votación con presupuesto inicial.
     function openVoting() external payable onlyOwner {
         require(!votingOpen, "Voting already open");
         require(msg.value > 0, "Initial budget required");
@@ -109,6 +124,7 @@ contract QuadraticVoting {
         emit VotingOpened(currentRound, msg.value);
     }
 
+    // Registra participantes y acuña tokens según el Ether enviado.
     function addParticipant() external payable nonReentrant {
         uint256 tokensToMint = msg.value / tokenPriceWei;
         require(tokensToMint > 0, "Must buy at least 1 token");
@@ -124,12 +140,14 @@ contract QuadraticVoting {
         emit ParticipantAdded(msg.sender, tokensToMint);
     }
 
+    // Permite darse de baja como participante.
     function removeParticipant() external onlyParticipant nonReentrant {
         isParticipant[msg.sender] = false;
         numParticipants -= 1;
         emit ParticipantRemoved(msg.sender);
     }
 
+    // Crea una propuesta y verifica que el contrato externo soporte la interfaz requerida.
     function addProposal(
         string memory _title,
         string memory _description,
@@ -168,6 +186,7 @@ contract QuadraticVoting {
         return proposalId;
     }
 
+    // Cancela una propuesta pendiente sin recorrer votantes.
     function cancelProposal(uint256 proposalId) external whenVotingOpen nonReentrant {
         Proposal storage proposal = _getExistingProposal(proposalId);
         _requireCurrentRoundProposal(proposal);
@@ -182,6 +201,7 @@ contract QuadraticVoting {
         emit ProposalCanceled(proposalId);
     }
 
+    // Compra tokens adicionales para un participante.
     function buyTokens() external payable onlyParticipant nonReentrant {
         uint256 tokensToMint = msg.value / tokenPriceWei;
         require(tokensToMint > 0, "Must buy at least 1 token");
@@ -193,6 +213,7 @@ contract QuadraticVoting {
         emit TokensPurchased(msg.sender, tokensToMint, spentWei);
     }
 
+    // Vende tokens libres y devuelve su equivalente en Ether.
     function sellTokens(uint256 amount) external onlyParticipant nonReentrant {
         require(amount > 0, "Amount must be > 0");
         require(token.balanceOf(msg.sender) >= amount, "Insufficient token balance");
@@ -207,22 +228,27 @@ contract QuadraticVoting {
         emit TokensSold(msg.sender, amount, refundAmount);
     }
 
+    // Devuelve la dirección del token ERC20 usado por el sistema.
     function getERC20() external view returns (address) {
         return address(token);
     }
 
+    // Consulta propuestas de financiación pendientes de la ronda actual.
     function getPendingProposals() external view whenVotingOpen returns (uint256[] memory) {
         return _getProposalsByFilter(ProposalStatus.Pending, false);
     }
 
+    // Consulta propuestas de financiación aprobadas de la ronda actual.
     function getApprovedProposals() external view whenVotingOpen returns (uint256[] memory) {
         return _getProposalsByFilter(ProposalStatus.Approved, false);
     }
 
+    // Consulta propuestas de signaling pendientes de la ronda actual.
     function getSignalingProposals() external view whenVotingOpen returns (uint256[] memory) {
         return _getProposalsByFilter(ProposalStatus.Pending, true);
     }
 
+    // Devuelve la información principal de una propuesta.
     function getProposalInfo(uint256 proposalId)
         external
         view
@@ -253,6 +279,7 @@ contract QuadraticVoting {
         );
     }
 
+    // Deposita votos aplicando coste cuadrático acumulado.
     function stake(uint256 proposalId, uint256 votesToAdd) external whenVotingOpen onlyParticipant nonReentrant {
         require(votesToAdd > 0, "Votes must be > 0");
         Proposal storage proposal = _getExistingProposal(proposalId);
@@ -276,6 +303,7 @@ contract QuadraticVoting {
         }
     }
 
+    // Retira votos de una propuesta pendiente y devuelve los tokens correspondientes.
     function withdrawFromProposal(uint256 proposalId, uint256 votesToRemove)
         external
         whenVotingOpen
@@ -300,6 +328,7 @@ contract QuadraticVoting {
         emit VotesWithdrawn(proposalId, msg.sender, votesToRemove, tokensToReturn);
     }
 
+    // Cierra la ronda sin ejecutar signaling ni devolver tokens en bucle.
     function closeVoting() external onlyOwner whenVotingOpen nonReentrant {
         uint256 closedRound = currentRound;
         votingOpen = false;
@@ -317,20 +346,41 @@ contract QuadraticVoting {
         emit VotingClosed(closedRound, remainingBudget);
     }
 
+    // Permite reclamar tokens bloqueados en propuestas canceladas o no aprobadas.
     function claimRefundFromProposal(uint256 proposalId) external nonReentrant {
         Proposal storage proposal = _getExistingProposal(proposalId);
         require(_canClaimRefund(proposal), "Refund not available");
+
+        /*
+        * Si es una propuesta de signaling de una ronda cerrada pero sigue Pending,
+        * primero debe ejecutarse con executeSignalingProposal.
+        *
+        * Esto evita que un usuario reclame antes y reduzca totalVotes /
+        * totalTokensStaked antes de que esos valores se envien al contrato externo.
+        */
+        require(
+            !(proposal.isSignaling && proposal.status == ProposalStatus.Pending && roundClosed[proposal.roundId]),
+            "Execute signaling first"
+        );
 
         uint256 votes = userVotesInProposal[proposalId][msg.sender];
         require(votes > 0, "No tokens to claim");
 
         uint256 tokensToReturn = votes * votes;
+
+        require(proposal.totalVotes >= votes, "Invalid vote accounting");
+        require(proposal.totalTokensStaked >= tokensToReturn, "Invalid token accounting");
+
         userVotesInProposal[proposalId][msg.sender] = 0;
+        proposal.totalVotes -= votes;
+        proposal.totalTokensStaked -= tokensToReturn;
 
         require(token.transfer(msg.sender, tokensToReturn), "Token return failed");
+
         emit RefundClaimed(proposalId, msg.sender, tokensToReturn);
     }
 
+    // Ejecuta una propuesta de signaling bajo demanda tras cerrar su ronda.
     function executeSignalingProposal(uint256 proposalId) external nonReentrant {
         Proposal storage proposal = _getExistingProposal(proposalId);
         require(proposal.isSignaling, "Not signaling");
@@ -354,6 +404,7 @@ contract QuadraticVoting {
         emit SignalingExecuted(proposalId, success);
     }
 
+    // Consulta cuántos tokens puede reclamar un votante.
     function getClaimableTokens(uint256 proposalId, address voter) external view returns (uint256) {
         Proposal storage proposal = _getExistingProposal(proposalId);
         if (!_canClaimRefund(proposal)) {
@@ -364,6 +415,7 @@ contract QuadraticVoting {
         return votes * votes;
     }
 
+    // Comprueba si una propuesta de financiación supera el umbral y la ejecuta.
     function _checkAndExecuteProposal(uint256 proposalId) internal {
         Proposal storage proposal = proposals[proposalId];
         if (proposal.status != ProposalStatus.Pending || proposal.isSignaling) {
@@ -398,6 +450,7 @@ contract QuadraticVoting {
         emit ProposalApproved(proposalId, proposal.requiredBudget, threshold);
     }
 
+    // Calcula el umbral usando escala entera para representar 0.2.
     function _calculateThreshold(uint256 proposalBudget) internal view returns (uint256) {
         if (totalBudget == 0) {
             return type(uint256).max;
@@ -411,11 +464,13 @@ contract QuadraticVoting {
         return scaledThreshold / 10;
     }
 
+    // Recupera una propuesta existente o revierte.
     function _getExistingProposal(uint256 proposalId) internal view returns (Proposal storage proposal) {
         proposal = proposals[proposalId];
         require(proposal.exists, "Proposal does not exist");
     }
 
+    // Filtra propuestas de la ronda actual por estado y tipo.
     function _getProposalsByFilter(ProposalStatus statusFilter, bool onlySignaling)
         internal
         view
@@ -458,20 +513,32 @@ contract QuadraticVoting {
         return ids;
     }
 
+    // Determina si los tokens bloqueados en una propuesta son reclamables.
     function _canClaimRefund(Proposal storage proposal) internal view returns (bool) {
         if (proposal.status == ProposalStatus.Approved) {
             return false;
         }
+
         if (proposal.status == ProposalStatus.Canceled) {
             return true;
         }
+
+        // Si es signaling y sigue Pending, primero debe procesarse
+        // con executeSignalingProposal.
+        if (proposal.isSignaling) {
+            return false;
+        }
+
+        // Propuesta de financiación no aprobada de una ronda cerrada.
         return roundClosed[proposal.roundId];
     }
 
+    // Evita operar sobre propuestas de rondas anteriores durante una votación activa.
     function _requireCurrentRoundProposal(Proposal storage proposal) internal view {
         require(proposal.roundId == currentRound, "Proposal is not from current round");
     }
 
+    // Devuelve Ether sobrante cuando el pago no es múltiplo del precio del token.
     function _refundRemainder(address recipient, uint256 remainder) internal {
         if (remainder == 0) {
             return;

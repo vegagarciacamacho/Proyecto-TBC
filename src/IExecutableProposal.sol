@@ -4,10 +4,11 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 /**
- * @dev Interfaz para propuestas externas
- * Debe soportar el estándar ERC165
+ * @dev Interfaz que deben implementar los contratos externos de propuesta.
+ * Hereda de IERC165 para que QuadraticVoting pueda verificar compatibilidad.
  */
 interface IExecutableProposal is IERC165 {
+    // Función llamada cuando una propuesta es ejecutada por QuadraticVoting.
     function executeProposal(
         uint256 proposalId, 
         uint256 numVotes, 

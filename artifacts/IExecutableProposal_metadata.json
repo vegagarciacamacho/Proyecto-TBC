@@ -49,7 +49,7 @@
 			}
 		],
 		"devdoc": {
-			"details": "Interfaz para propuestas externas Debe soportar el estándar ERC165",
+			"details": "Interfaz que deben implementar los contratos externos de propuesta. Hereda de IERC165 para que QuadraticVoting pueda verificar compatibilidad.",
 			"kind": "dev",
 			"methods": {
 				"supportsInterface(bytes4)": {
@@ -89,11 +89,11 @@
 			]
 		},
 		"src/IExecutableProposal.sol": {
-			"keccak256": "0x002ca4d1a93e222fe760efa40c2792b934423a131897bc0c10cf586329edb7d4",
+			"keccak256": "0xe1eedb33e724eec0dbebc30ee924e19a70e7b587ea158d0cf9c6657f018581ec",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://4de3d135505ebed7ddcc23d906de6fd0384293c538df60e3919d162cbe10b7e6",
-				"dweb:/ipfs/QmSJXo5Gb7A5njWb4AHSPDaQbryVdQLDPYWnAEaxuV5vtk"
+				"bzz-raw://51191149dc25f0649647d64aea1ac92b5f65ebaa2ec11a12cb0b32c403378646",
+				"dweb:/ipfs/QmQNv3CrSFLzTwgvHzpf78xVmUMKBLRU4eruUNrpJuLMhC"
 			]
 		}
 	},
