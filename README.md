@@ -19,9 +19,13 @@ Proyecto-TBC/
 
 ## Requisitos
 Compilar en Remix
+
 Solidity compiler: 0.8.20
+
 Optimizer: enabled
+
 Runs: 1
+
 Gas limit recomendado: 30000000
 
 ## Dependencias
