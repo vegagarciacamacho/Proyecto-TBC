@@ -3,11 +3,31 @@
 ## 📂 Estructura del Proyecto
 ```text
 Proyecto-TBC/
-├── src/                # Código fuente principal de la Blockchain
-│   ├── blockchain.py   # Lógica del encadenamiento y consenso
-│   ├── block.py        # Definición de la clase Bloque
-│   └── transaction.py  # Gestión de transacciones
-├── tests/              # Pruebas unitarias y de integración
-├── data/               # Almacenamiento local de la cadena
-├── .gitignore          # Archivos excluidos de Git (venv, __pycache__)
-└── README.md           # Documentación del proyecto
+├── src/
+│   ├── mocks/
+│   │   ├── mockProposal.sol
+│   │   └── securityMocks.sol
+│   ├── governanceToken.sol
+│   ├── IExecutableProposal.sol
+│   └── quadraticVoting.sol
+├── tests/
+│   ├── full_quadraticVoting_test.sol
+│   ├── quadraticVoting_test.sol
+│   └── security_test.sol
+└── README.md           
+```
+
+## Requisitos
+Compilar en Remix
+Solidity compiler: 0.8.20
+Optimizer: enabled
+Runs: 1
+Gas limit recomendado: 30000000
+
+## Dependencias
+OpenZeppelin Contracts
+
+## Tests
+- tests/quadraticVoting_test.sol
+- tests/full_quadraticVoting_test.sol
+- tests/security_test.sol
